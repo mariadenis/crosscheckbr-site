@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://mariadenis.github.io/crosscheckbr-site/sitemap.xml
