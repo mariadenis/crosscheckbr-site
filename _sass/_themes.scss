@@ -1,0 +1,612 @@
+/*******************************************************************************
+ * Identidade visual Crosscheck BR
+ * Override local de al_folio_core/_sass/_themes.scss: mudam só os valores dos
+ * tokens de cor (claro e escuro) e o bloco "Crosscheck BR" no fim do arquivo.
+ * Fonte dos valores: docs/IDENTIDADE_VISUAL.md (guia de marca v1.0).
+ ******************************************************************************/
+/*******************************************************************************
+ * Themes
+ ******************************************************************************/
+@use "variables" as v;
+@use "sass:color";
+
+:root {
+  color-scheme: light;
+  --global-bg-color: #f8f7f4;
+  --global-code-bg-color: #ebf0f5;
+  --global-text-color: #1a1d20;
+  --global-text-color-light: #5b6168;
+  --global-theme-color: #1a1d20;
+  --global-hover-color: #1a1d20;
+  --global-hover-text-color: #f8f7f4;
+  --global-footer-bg-color: #1a1d20;
+  --global-footer-text-color: #c9cbc6;
+  --global-footer-link-color: #f8f7f4;
+  --global-distill-app-color: #5c6066;
+  --global-divider-color: #e2e8f0;
+  --global-card-bg-color: #f0f0ec;
+  --global-highlight-color: #c85a32;
+  --global-back-to-top-bg-color: rgba(26, 29, 32, 0.45);
+  --global-back-to-top-text-color: #f8f7f4;
+  --global-newsletter-bg-color: #f0f0ec;
+  --global-newsletter-text-color: #1a1d20;
+
+  --global-tip-block: #2e6f40;
+  --global-tip-block-bg: #f0f0ec;
+  --global-tip-block-text: #1a1d20;
+  --global-tip-block-title: #1a1d20;
+  --global-warning-block: #d9a036;
+  --global-warning-block-bg: #f0f0ec;
+  --global-warning-block-text: #1a1d20;
+  --global-warning-block-title: #1a1d20;
+  --global-danger-block: #c85a32;
+  --global-danger-block-bg: #f0f0ec;
+  --global-danger-block-text: #1a1d20;
+  --global-danger-block-title: #1a1d20;
+
+  #light-toggle-system {
+    display: inline-block;
+  }
+
+  #light-toggle-dark {
+    display: none;
+  }
+
+  #light-toggle-light {
+    display: none;
+  }
+
+  .only-light {
+    display: block;
+  }
+
+  .only-dark {
+    display: none;
+  }
+
+  #back-to-top {
+    color: var(--global-back-to-top-text-color);
+    background: var(--global-back-to-top-bg-color);
+    bottom: v.$back-to-top-bottom;
+    right: v.$back-to-top-right;
+    height: v.$back-to-top-height;
+    width: v.$back-to-top-width;
+    z-index: v.$back-to-top-z-index;
+  }
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --global-bg-color: #1a1d20;
+  --global-code-bg-color: #252b31;
+  --global-text-color: #f0f0ec;
+  --global-text-color-light: #a3a7ad;
+  --global-theme-color: #f0f0ec;
+  --global-hover-color: #f0f0ec;
+  --global-hover-text-color: #1a1d20;
+  --global-footer-bg-color: #111315;
+  --global-footer-text-color: #a3a7ad;
+  --global-footer-link-color: #f8f7f4;
+  --global-distill-app-color: #a3a7ad;
+  --global-divider-color: rgba(240, 240, 236, 0.16);
+  --global-card-bg-color: #23272b;
+  --global-back-to-top-bg-color: rgba(240, 240, 236, 0.5);
+  --global-back-to-top-text-color: #1a1d20;
+  --global-newsletter-bg-color: #23272b;
+  --global-newsletter-text-color: #f0f0ec;
+
+  --global-tip-block: #7fb88d;
+  --global-tip-block-bg: #23272b;
+  --global-tip-block-text: #f0f0ec;
+  --global-tip-block-title: #f0f0ec;
+  --global-warning-block: #d9a036;
+  --global-warning-block-bg: #23272b;
+  --global-warning-block-text: #f0f0ec;
+  --global-warning-block-title: #f0f0ec;
+  --global-danger-block: #e0825f;
+  --global-danger-block-bg: #23272b;
+  --global-danger-block-text: #f0f0ec;
+  --global-danger-block-title: #f0f0ec;
+
+  .only-light {
+    display: none;
+  }
+
+  .only-dark {
+    display: block;
+  }
+}
+
+html[data-theme-setting="dark"] {
+  #light-toggle-system {
+    display: none;
+  }
+
+  #light-toggle-dark {
+    display: inline-block;
+  }
+
+  #light-toggle-light {
+    display: none;
+  }
+
+  #back-to-top {
+    color: var(--global-back-to-top-text-color);
+    background: var(--global-back-to-top-bg-color);
+  }
+}
+
+html[data-theme-setting="light"] {
+  #light-toggle-system {
+    display: none;
+  }
+
+  #light-toggle-dark {
+    display: none;
+  }
+
+  #light-toggle-light {
+    display: inline-block;
+  }
+}
+
+.fa-half-sun-moon {
+  position: relative;
+  display: inline-block;
+
+  --fa-font: var(--fa-font-solid);
+  speak: none;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  width: 1em;
+  height: 1em;
+}
+
+.fa-half-sun-moon::before,
+.fa-half-sun-moon::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  top: -0.5px;
+  bottom: -0.5px;
+  text-align: center;
+  line-height: 1em;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  font: var(--fa-font);
+}
+
+/* Left half: MOON */
+.fa-half-sun-moon::before {
+  content: "\f111";
+  color: var(--global-text-color);
+  clip-path: polygon(0 0, calc(50% - 0.5px) 0, calc(50% - 0.5px) 100%, 0 100%);
+}
+
+/* Right half: SUN */
+.fa-half-sun-moon::after {
+  content: "\f185";
+  color: var(--global-text-color);
+  clip-path: polygon(calc(50% + 0.5px) 0, 100% 0, 100% 100%, calc(50% + 0.5px) 100%);
+  right: -1.5px; /* slight overflow to avoid right-edge clipping */
+  transform: translateX(-1px); /* visually re-center the sun half */
+}
+
+#light-toggle:hover .fa-half-sun-moon::before {
+  color: var(--global-theme-color);
+}
+
+#light-toggle:hover .fa-half-sun-moon::after {
+  color: var(--global-theme-color);
+}
+
+
+/*******************************************************************************
+ * Crosscheck BR — tokens, tipografia e componentes de documento.
+ * Tokens e regras: docs/IDENTIDADE_VISUAL.md (guia de marca v1.0).
+ * Páginas de documento seguem o guia de formatação de documentos: título em
+ * Playfair Display 32 pt, subtítulos em Inter 22/18 pt, corpo 12 pt com
+ * entrelinha 1,5, bordas #E2E8F0, Azul Névoa em código e cabeçalho de tabela.
+ * As fontes vêm de third_party_libraries.google_fonts no _config.yml.
+ ******************************************************************************/
+:root {
+  --cc-papel: #f8f7f4;
+  --cc-jornal: #f0f0ec;
+  --cc-tinta: #1a1d20;
+  --cc-chumbo: #5b6168;
+  --cc-linha: #d8d5ce;
+  --cc-borda: #e2e8f0;
+  --cc-verde: #2e6f40;
+  --cc-terracota: #c85a32;
+  --cc-terracota-texto: #a8461f;
+  --cc-mostarda: #d9a036;
+  --cc-mostarda-texto: #7a5a12;
+  --cc-nevoa: #ebf0f5;
+  --cc-fonte-titulo: "Playfair Display", Georgia, "Times New Roman", serif;
+  --cc-fonte-texto: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cc-fonte-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+  --cc-raio: 2px;
+}
+
+html[data-theme="dark"] {
+  --cc-jornal: #23272b;
+  --cc-chumbo: #a3a7ad;
+  --cc-linha: #3a3f45;
+  --cc-borda: rgba(240, 240, 236, 0.16);
+  --cc-verde: #7fb88d;
+  --cc-terracota: #e0825f;
+  --cc-terracota-texto: #eba58b;
+  --cc-mostarda-texto: #ecc877;
+  --cc-nevoa: #252b31;
+}
+
+/* ---- Texto ---------------------------------------------------------------- */
+html body {
+  font-family: var(--cc-fonte-texto);
+  font-weight: 400;
+  font-size: 1rem; /* 12 pt */
+  line-height: 1.5;
+}
+
+h1,
+.post-title {
+  font-family: var(--cc-fonte-titulo);
+  font-weight: 700;
+  font-size: 2.667rem; /* 32 pt */
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--cc-fonte-texto);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+h2 {
+  font-size: 1.833rem; /* 22 pt */
+  margin-top: 2.75rem;
+  margin-bottom: 0.75rem;
+}
+
+h3 {
+  font-size: 1.5rem; /* 18 pt */
+  margin-top: 2.25rem;
+  margin-bottom: 0.5rem;
+}
+
+h4 {
+  font-size: 1.125rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.post-description {
+  font-size: 1.125rem;
+  line-height: 1.5;
+  color: var(--cc-chumbo);
+}
+
+/* Links de conteúdo: mesma cor do texto, sublinhado que engrossa no cursor. */
+article a:not(.btn),
+.post-description a {
+  color: var(--global-text-color);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+
+  &:hover {
+    color: var(--global-text-color);
+    text-decoration-thickness: 2px;
+  }
+}
+
+hr {
+  border-top: 1px solid var(--cc-borda);
+  margin: 3rem 0 0;
+}
+
+/* ---- Referências a identificadores (RF, RNF, RN, HU, IND, P) ------------- */
+article a.cc-ref {
+  text-decoration-style: dotted;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration-style: solid;
+  }
+}
+
+/* Âncoras não ficam escondidas sob o cabeçalho fixo. */
+article [id] {
+  scroll-margin-top: 72px;
+}
+
+/* Ao seguir um link, a linha da definição fica destacada. */
+article tr:has(span:target) td,
+.cc-kpi:has(:target) {
+  background-color: var(--cc-nevoa);
+}
+
+/* ---- Cabeçalho: logo horizontal, fio de 1 px, sem barra colorida ---------- */
+.navbar .navbar-brand.cc-marca {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.cc-logo {
+  height: 30px;
+  width: auto;
+}
+
+.navbar.navbar-light .navbar-nav .nav-item.active > .nav-link {
+  font-weight: 600;
+  box-shadow: inset 0 -2px 0 var(--global-text-color);
+}
+
+/* ---- Código: fundo Azul Névoa, sem borda ---------------------------------- */
+code,
+pre,
+kbd {
+  font-family: var(--cc-fonte-mono);
+}
+
+code {
+  font-size: 0.875em;
+  color: var(--global-text-color);
+  background-color: var(--cc-nevoa);
+  padding: 0.1em 0.35em;
+  border-radius: var(--cc-raio);
+}
+
+pre {
+  background-color: var(--cc-nevoa);
+  padding: 16px;
+  border: 0;
+  border-radius: var(--cc-raio);
+
+  code {
+    background: none;
+    padding: 0;
+  }
+}
+
+/* ---- Tabelas: cabeçalho Azul Névoa, fios horizontais, alinhadas à esquerda - */
+article table,
+article table.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0 2rem;
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    font-size: inherit;
+    padding: 0.625rem 0.75rem;
+    border-top: 0;
+    border-bottom: 1px solid var(--cc-borda);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    background-color: var(--cc-nevoa);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  /* nomes de arquivo longos quebram linha em vez de estourar a tabela */
+  td,
+  th {
+    overflow-wrap: break-word;
+  }
+
+  code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* tabela de metadados: cabeçalho vazio não aparece */
+  thead:not(:has(th:not(:empty))) {
+    display: none;
+  }
+}
+
+/* ---- Citação e caixas de destaque ----------------------------------------- */
+blockquote {
+  background: transparent;
+  border-left: 2px solid var(--global-text-color);
+  margin: 1.5rem 0;
+  padding: 0.25rem 0 0.25rem 1.25rem;
+  font-family: var(--cc-fonte-titulo);
+  font-style: italic;
+  font-size: 1.25rem;
+}
+
+/* Fundo cinza-claro, margem interna de 16 px, barra lateral de 4 px. */
+blockquote.block-tip,
+blockquote.block-warning,
+blockquote.block-danger {
+  background-color: var(--cc-jornal);
+  border-left-width: 4px;
+  border-left-style: solid;
+  border-radius: 0 var(--cc-raio) var(--cc-raio) 0;
+  padding: 16px;
+  font-family: var(--cc-fonte-texto);
+  font-style: normal;
+  font-size: 1rem;
+
+  p + p {
+    margin-top: 0.5rem;
+  }
+}
+
+blockquote.block-tip {
+  border-left-color: var(--cc-verde);
+}
+
+blockquote.block-warning {
+  border-left-color: var(--cc-mostarda);
+}
+
+blockquote.block-danger {
+  border-left-color: var(--cc-terracota);
+}
+
+/* ---- Indicadores em cartões ----------------------------------------------- */
+.cc-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.cc-kpi {
+  border: 1px solid var(--cc-borda);
+  border-top: 4px solid var(--cc-verde);
+  border-radius: var(--cc-raio);
+  padding: 1rem;
+}
+
+.cc-kpi-rotulo {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-chumbo);
+}
+
+.cc-kpi-valor {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 2.5rem;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-kpi-texto {
+  display: block;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--cc-chumbo);
+}
+
+@media (max-width: 640px) {
+  .cc-kpis {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Impressão e PDF: A4, margens de 2,5 cm, logo no topo ------------------ */
+@page {
+  size: A4;
+  margin: 2.5cm;
+
+  @bottom-left {
+    content: "Crosscheck BR";
+    font-family: "Inter", sans-serif;
+    font-size: 8pt;
+    color: #5b6168;
+  }
+
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: "Inter", sans-serif;
+    font-size: 8pt;
+    color: #5b6168;
+  }
+}
+
+@media print {
+  html {
+    font-size: 12pt;
+  }
+
+  html body,
+  body.fixed-top-nav {
+    padding: 0;
+    background: #fff;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body > header,
+  #navbar,
+  #progress,
+  .progress-container,
+  #toc-sidebar,
+  #back-to-top,
+  footer {
+    display: none !important;
+  }
+
+  .container {
+    max-width: none;
+    width: 100%;
+    margin: 0 !important;
+    padding: 0;
+  }
+
+  .row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .row > .col-sm-3 {
+    display: none;
+  }
+
+  .row > .col-sm-9 {
+    flex: 0 0 100%;
+    max-width: 100%;
+    width: 100%;
+    padding: 0;
+  }
+
+  .post-header::before {
+    content: "";
+    display: block;
+    height: 28pt;
+    margin-bottom: 28pt;
+    background: url("../img/marca/crosscheck-br-horizontal-positiva.svg") no-repeat left center / contain;
+  }
+
+  article table,
+  article table.table {
+    font-size: 9pt;
+
+    th,
+    td {
+      padding: 5pt 6pt;
+    }
+  }
+
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+  }
+
+  tr,
+  blockquote,
+  .cc-kpi {
+    break-inside: avoid;
+  }
+
+  article a:not(.btn) {
+    text-decoration: none;
+  }
+}
