@@ -8,6 +8,8 @@ nav_order: 3
 ---
 ## Equipe 
 
+O **Product Owner** do projeto são os mentores do programa, que propuseram o desafio e avaliam as entregas. Os papéis, as frentes de cada integrante e a forma de trabalho estão em [Organização, Scrum e papéis]({{ '/organizacao/' | relative_url }}).
+
 | Foto | Integrante | GitHub | Papel |
 | :---: | :--- | :---: | :---: | :--- |
 | <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Daltro Oliveira Vinuto | - | Scrum Master |
