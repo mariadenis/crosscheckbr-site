@@ -21,6 +21,9 @@ DOCUMENTOS = {
         "requisitos.md", "/requisitos/", "Requisitos",
         "Requisitos funcionais e não funcionais, regras de negócio e pendências do Checa AI, "
         "com o status de cada item no código.", False),
+    "entrega/organizacao/organizacao.md": (
+        "organizacao.md", "/organizacao/", "Organização, Scrum e papéis",
+        "Papéis do Scrum, frentes de cada integrante, forma de trabalho e linha do tempo do Checa AI.", False),
     "entrega/requisitos/versao-anterior/ENGENHARIA_DE_REQUISITOS.md": (
         "requisitos-versao-anterior.md", "/requisitos/versao-anterior/",
         "Engenharia de Requisitos (versão de 30/09/2026)",
