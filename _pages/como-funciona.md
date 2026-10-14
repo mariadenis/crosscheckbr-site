@@ -13,31 +13,38 @@ Cada consulta passa pelas mesmas etapas. Todas ficam registradas na resposta, co
 
 | Etapa | O que acontece |
 | --- | --- |
-| 1. Recebimento | A mensagem é classificada como texto, título ou link. Links só são lidos quando pertencem a um portal do catálogo. |
-| 2. Afirmações | O texto é dividido em afirmações factuais que podem ser verificadas. |
-| 3. Base de checagem | Cada afirmação é procurada no índice das agências de checagem. |
-| 4. Descoberta | Uma busca de notícias encontra o que foi publicado recentemente sobre o assunto. O conteúdo das fontes mais próximas é lido. |
-| 5. Julgamento | Cada notícia encontrada é avaliada: ela sustenta a afirmação, refuta, ou trata de outro assunto? |
-| 6. Corroboração | O sistema conta quantos veículos independentes tratam do assunto. Republicações e veículos do mesmo grupo contam uma vez. |
-| 7. Modelo e padrões | O modelo próprio estima a probabilidade de desinformação, em textos com 80 palavras ou mais. Os padrões textuais são identificados. |
-| 8. Avaliação | Os sinais são combinados por regras e pesos fixos, e a resposta é redigida por modelos de texto neutros. |
+| 1. Recebimento | A mensagem é classificada como texto, título ou link. O link só é lido quando pertence a um portal do catálogo; senão, o robô pede que você cole o texto. Relato de segunda mão, opinião, sátira e afirmação vaga são sinalizados. |
+| 2. Afirmações | O texto é dividido em afirmações que podem ser verificadas, sem a moldura de encaminhamento ("me mandaram que…") e mantendo o autor de uma fala ("Fulano disse que…"). |
+| 3. Base de checagens | Cada afirmação é procurada nas checagens já publicadas pelas agências: a base própria e, quando configurada, a Google Fact Check Tools. |
+| 4. Busca na web | Só quando a base não tem uma checagem aplicável: uma busca encontra o que os veículos e as agências publicaram. Sem resultado útil, a busca é reformulada uma vez. |
+| 5. Leitura | O conteúdo das páginas encontradas é lido. Páginas iniciais, listagens, redes sociais e PDFs não são lidos. |
+| 6. Julgamento | Cada página lida é avaliada frente à afirmação: confirma, contesta, só relata ou trata de outro assunto. O julgamento só vale com um trecho citado que exista na página. |
+| 7. Comparação | Republicações e veículos do mesmo grupo contam uma vez. Selos e datas divergentes entre as fontes são apontados. |
+| 8. Data | Se o texto diz "hoje", "ontem" ou "agora", fontes de outro período perdem peso e recebem o aviso "anterior ao período do texto". |
+| 9. Estimativa | Uma regra fixa e documentada combina as fontes e os selos e chega à propensão. A conclusão é escrita por modelos de texto neutros, não por inteligência artificial. |
 
 ## Por que a resposta nunca é "fato" ou "fake"
 
-Uma resposta binária esconde a incerteza e pede que a pessoa confie no sistema. O Crosscheck BR faz o contrário: mostra o que encontrou, diz o que não conseguiu verificar e devolve a decisão para quem lê. Toda resposta termina com três perguntas para a pessoa conferir por conta própria:
+Uma resposta binária esconde a incerteza e pede que a pessoa confie no sistema. O Checa AI faz o contrário: mostra o que encontrou, diz o que não conseguiu verificar e devolve a decisão para quem lê. Toda resposta termina com três perguntas para a pessoa conferir por conta própria:
 
 1. A data do fato é a mesma da publicação, ou o conteúdo é antigo?
 2. Quem assina o conteúdo original?
 3. A informação aparece em mais de um veículo independente?
 
-## O que cada sinal pesa
+## O que conta na estimativa
 
-As checagens de agências são o sinal mais forte. Quando uma agência já verificou exatamente aquela afirmação, essa é a melhor evidência disponível. A corroboração entre veículos vem em seguida. O modelo próprio e os padrões textuais são indícios auxiliares, com peso menor.
+- **Checagem de agência sobre a mesma afirmação** é a evidência mais forte. Quando uma agência de checagem contesta a afirmação, isso pesa como um selo.
+- **Notícia lida por inteiro** que confirma ou contesta a afirmação conta um voto por grupo de fontes independentes.
+- **Só a manchete não vota**: uma página que não pôde ser lida aparece na lista como "só manchete", sem influenciar a estimativa.
+- **Rede social ou site pouco acessado, sozinho,** não leva a estimativa a "alta" nem a "baixa".
+- **Sem nenhuma fonte que confirme ou conteste**, a resposta é "não foi possível estimar".
+
+O modelo próprio e os padrões textuais aparecem como sinais de estilo e não entram na conta.
 
 ## Limitações atuais
 
-- O modelo próprio só opina em textos com 80 palavras ou mais. Em textos curtos ele erra por causa do formato.
-- Sem um modelo de linguagem configurado, a relação entre a notícia e as fontes é medida por palavras em comum, o que pode trazer fontes sem relação.
-- Portais com acesso pago ou proteção contra robôs limitam a leitura do conteúdo.
+- Sem o modelo de linguagem, as fontes não são julgadas e a resposta é "não foi possível estimar".
+- Afirmações que nenhuma agência checou e que a imprensa só relata (por exemplo, "café cura câncer") tendem a terminar em "não foi possível estimar".
+- Portais com acesso pago limitam a leitura do conteúdo.
 
-Os detalhes e a situação de cada requisito estão na página de [requisitos]({{ '/requisitos/' | relative_url }}).
+Os detalhes e o status de cada requisito estão na página de [requisitos]({{ '/requisitos/' | relative_url }}).
