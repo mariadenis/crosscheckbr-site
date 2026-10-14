@@ -19,7 +19,7 @@ nav_order: 3
 
 ## Repositórios 
 
-O projeto tem dois repositórios. O **Checa-AI** (antes chamado CrossCheckBR) é o robô: recebe a notícia, consulta as fontes e monta a resposta. O **FakenewsBR** reúne o conjunto de dados em português e o modelo de detecção treinado com ele.
+O projeto tem dois repositórios. O **Checa-AI** é o robô: recebe a notícia, consulta as fontes e monta a resposta. O **FakenewsBR** reúne o conjunto de dados em português e o modelo de detecção treinado com ele.
 
 {% if site.data.repositories.github_repos %}
 

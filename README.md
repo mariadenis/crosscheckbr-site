@@ -1,6 +1,6 @@
 # Site do Checa AI
 
-Site de apresentação e documentação do [Checa AI](https://github.com/thiago-cg/Checa-AI) (antes Crosscheck BR),
+Site de apresentação e documentação do [Checa AI](https://github.com/thiago-cg/Checa-AI),
 feito com o template [al-folio](https://github.com/alshedivat/al-folio) (Jekyll, licença MIT).
 
 ## Rodar localmente
