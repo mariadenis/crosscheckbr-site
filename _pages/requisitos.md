@@ -1,866 +1,162 @@
 ---
 layout: page
 permalink: /requisitos/
-title: "Engenharia de Requisitos"
-description: "Requisitos, histórias de usuário, regras de negócio e pendências, com a situação de cada item no código."
+title: "Requisitos"
+description: "Requisitos funcionais e não funcionais, regras de negócio e pendências do Checa AI, com o status de cada item no código."
 nav: false
 toc:
   sidebar: left
 ---
 
-| **Produto** | Crosscheck BR — checagem cruzada de fatos em larga escala |
-| **Repositório principal** | `thiago-cg/CrossCheckBR` |
-| **Repositório do modelo e dos dados** | `thiago-cg/FakenewsBR` |
-| **Versão do sistema** | `mvp-0.2.0`, código da `main` em `17fc2bd` (pull request nº 4) |
-| **Data deste documento** | 30 de setembro de 2026 |
+| **Versão** | 2.0, 14/10/2026 |
+| **Código de referência** | `main` @ `d6da038` (pull requests até o nº 21) |
+| **Versão anterior** | [`versao-anterior/ENGENHARIA_DE_REQUISITOS.md`](versao-anterior/), 30/09/2026 (`main` @ `17fc2bd`, pull request nº 4) |
 | **Equipe** | Thiago Correia Gonzaga, Gabriella Oliveira de Souza Dias, Maria Eduarda Denis Duarte Marques, Guilherme Silva Dutra, Eliane Orlandin do Carmo, Daltro Oliveira Vinuto |
 
-Este documento registra os requisitos do produto e a situação de cada um no
-código. As situações usam três valores:
+**Status.** *Implementado*: o comportamento existe na `main` e cumpre a descrição. *Parcial*: existe, com a
+lacuna indicada. *Não implementado*: não existe no código.
 
-- **Atendido**: implementado e coberto por teste automatizado.
-- **Parcial**: implementado, com uma lacuna descrita no próprio requisito.
-- **Pendente**: ainda não implementado.
-
-Este documento descreve a branch `main` depois do pull request nº 4
-(telemetria, avaliação e núcleo de decisão). Os itens marcados com **†** existem
-só na branch `melhorias/revisao-arquitetura`, ainda não integrada ([P01](#p01){: .cc-ref}).
-
-**Onde está cada informação.** Cada dado fica em um único lugar; os demais
-pontos apontam para ele.
-
-| Informação | Lugar único |
-|---|---|
-| Indicadores e metas | [Seção 1.4](#14-indicadores-de-desempenho) |
-| Requisitos funcionais, histórias de usuário e regras de negócio | [Seção 2](#2-requisitos-funcionais) |
-| Requisitos não funcionais [RNF01](#rnf01--explicar-como-cada-avaliação-foi-obtida){: .cc-ref} a [RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref} e restrições | [Seção 3](#3-requisitos-não-funcionais) |
-| Números do modelo e dos dados | [Seção 4](#4-requisitos-do-modelo-de-aprendizado-de-máquina-e-dos-dados) |
-| Arquivos, testes, integrações e pendências | [Seção 5](#5-matriz-de-rastreabilidade-e-mapeamento-de-integrações-externas) |
-| Requisitos [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref} a [RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados){: .cc-ref}, ciclo de vida, operação, monitoramento e Machine Learning Canvas | [Engenharia de Produto de Inteligência Artificial](../produto-de-ia/) |
-
-**Identificadores.** RF: requisito funcional. RNF: requisito não funcional.
-RN: regra de negócio. HU: história de usuário. IND: indicador. P: pendência.
+**Prioridade.** *Alta*: sem ela o produto não cumpre o objetivo. *Média*: melhora a qualidade ou a confiança da
+resposta. *Baixa*: complementar.
 
 ---
 
-## 1. Visão Geral e Proposta de Valor
+## 1. Introdução
 
-### 1.1 Descrição do produto
+**Objetivo.** O Checa AI ajuda uma pessoa a decidir se compartilha uma notícia que recebeu. Ela envia o texto,
+o título ou o link, e o sistema responde com a **propensão** de aquele conteúdo ser desinformação (baixa, média,
+alta ou indeterminada), as fontes que embasam a estimativa e o passo a passo da análise. O sistema nunca emite
+veredito.
 
-O Crosscheck BR é um assistente de checagem de fatos. A pessoa envia o texto,
-o título ou o link de uma notícia e recebe uma avaliação da **propensão** de
-aquele conteúdo ser desinformação, em uma escala de quatro valores: baixa,
-média, alta ou indeterminada. A resposta vem acompanhada das evidências
-encontradas, com os endereços das fontes, e do passo a passo que levou à
-avaliação.
+**Escopo.** Texto em português do Brasil, recebido por um robô no Telegram, por uma página na internet ou pela
+interface de programação. A evidência vem de checagens publicadas por agências (base própria e Google Fact Check
+Tools) e de notícias encontradas na web, lidas e julgadas por um modelo de linguagem. Fora do escopo: análise de
+imagem, vídeo e áudio; outros idiomas; outros aplicativos de mensagem.
 
-> **Diretriz ética: a resposta nunca é binária ([RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}).** O sistema é
-> probabilístico e não emite veredito. Ele nunca afirma que algo "é falso" ou
-> "é verdade". O objetivo é dar à pessoa os elementos para que ela mesma avalie.
-{: .block-warning }
-
-A avaliação vem só de evidência sobre a **veracidade** da afirmação:
-
-1. **Checagens existentes**: o selo que uma agência de checagem já deu à
-   afirmação, lido de forma tipada (por exemplo, "Distorcido" vira
-   "enganoso"), e só quando a página trata da afirmação.
-2. **Postura das fontes**: cada notícia encontrada é julgada como
-   "sustenta", "refuta", "relata sem endossar" ou "não trata", com um trecho
-   citado que o sistema confere no texto da fonte. Veículos que republicam o
-   mesmo conteúdo contam como um só.
-
-Dois sinais aparecem na resposta, mas **não entram na avaliação** ([RN11](#rn11){: .cc-ref}),
-porque medem o estilo do texto e não a veracidade:
-
-3. **Modelo próprio de aprendizado de máquina**: estima a probabilidade de o
-   texto ser desinformação a partir do estilo.
-4. **Padrões textuais**: marcas típicas de desinformação, como apelo à
-   urgência e fonte vaga.
-
-### 1.2 Objetivos sociais e de negócio
-
-Cada objetivo é medido pelos indicadores da [seção 1.4](#14-indicadores-de-desempenho).
-
-| Objetivo | Descrição | Indicadores |
-|---|---|---|
-| Reduzir o compartilhamento de desinformação | Oferecer, no momento em que a pessoa recebe a mensagem, os elementos para decidir se compartilha. | [IND03](#ind03){: .cc-ref}, [IND04](#ind04){: .cc-ref}, [IND05](#ind05){: .cc-ref}, [IND12](#ind12){: .cc-ref} |
-| Fortalecer a autonomia de quem lê | Mostrar evidências e ensinar a conferi-las, em vez de entregar uma conclusão pronta. | [IND01](#ind01){: .cc-ref}, [IND13](#ind13){: .cc-ref} |
-| Dar visibilidade ao trabalho das agências de checagem | Levar a pessoa à checagem original, com o endereço e o selo da agência. | [IND06](#ind06){: .cc-ref} |
-| Manter a confiança por meio da transparência | Expor as fontes, as etapas executadas e as limitações de cada resposta. | [IND01](#ind01){: .cc-ref}, [IND02](#ind02){: .cc-ref}, [IND07](#ind07){: .cc-ref}, [IND09](#ind09){: .cc-ref} |
-
-### 1.3 Público-alvo e partes interessadas
-
-| Grupo | Quem | Necessidade ou interesse |
-|---|---|---|
-| **Usuários diretos** | Pessoas leigas que recebem notícias em aplicativos de mensagem | Saber, em linguagem simples, se vale a pena desconfiar de uma mensagem. |
-| | Estudantes e professores | Usar a resposta como material para aprender a avaliar fontes. |
-| | Jornalistas e checadores | Fazer uma triagem rápida do que já foi checado e por quem. |
-| | Equipe do projeto | Auditar cada resposta pelo registro das etapas e das fontes. |
-| **Usuários indiretos** | Contatos de quem consulta; agências de checagem citadas | Menos boatos em circulação; crédito e visitas às checagens originais. |
-| **Clientes** | Não há cliente pagante: o projeto é acadêmico. Docentes e a instituição do curso acompanham | Aprendizado, rigor e resultados demonstráveis. |
-| **Outras partes** | Veículos cujo conteúdo é lido; Telegram e serviços externos; pessoas citadas nas notícias; autoridade de proteção de dados | Uso correto do conteúdo; respeito aos termos de uso; não ser rotulado injustamente; privacidade. |
-
-**Classes de usuário**
-
-| Classe | Quem | Como o produto trata |
-|---|---|---|
-| Favorecida | Pessoa leiga que recebeu uma mensagem duvidosa | As decisões de linguagem e de formato priorizam essa pessoa ([RNF04](#rnf04--redigir-as-respostas-em-linguagem-simples){: .cc-ref}). |
-| Desfavorecida | Quem tenta manipular o sistema para validar um boato | Proteções descritas no [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref}; o modelo não decide sozinho. |
-| Ignorada, por enquanto | Quem quer checar imagem, vídeo ou áudio | Recebe orientação ([RF03](#rf03--recusar-a-análise-de-imagens-e-vídeos){: .cc-ref}); a análise está fora do escopo ([HU04](#hu04){: .cc-ref}). |
-
-Personas e análise estratégica, ainda em rascunho, estão na
-[seção 1.7](#17-personas-e-análise-estratégica-rascunho).
-
-### 1.4 Indicadores de desempenho
-
-A tabela traduz o problema em indicadores. A coluna "valor atual" traz apenas
-números medidos; onde não há medição, isso está dito. As metas são
-**propostas deste documento** e precisam ser validadas pela equipe.
-
-<div class="cc-kpis">
-<div class="cc-kpi"><span class="cc-kpi-rotulo" id="ind01">IND01 · Transparência</span><span class="cc-kpi-valor">100%</span><span class="cc-kpi-texto">Respostas com fontes, etapas e limitações. Garantido por construção e por teste automatizado. Meta: 100%.</span></div>
-<div class="cc-kpi"><span class="cc-kpi-rotulo" id="ind02">IND02 · Neutralidade</span><span class="cc-kpi-valor">100%</span><span class="cc-kpi-texto">Respostas sem conclusão binária e sem termos partidários, nos testes automatizados. Meta: 100%.</span></div>
-<div class="cc-kpi"><span class="cc-kpi-rotulo" id="ind03">IND03 · Cobertura</span><span class="cc-kpi-valor">61%</span><span class="cc-kpi-texto">Casos da avaliação que não terminam em "indeterminada" (43 de 70). Meta: acima de 60%.</span></div>
-</div>
-
-Os três indicadores acima não se repetem na tabela. Os números do modelo
-ficam só na [seção 4.2](#42-métricas-de-avaliação-fora-de-produção).
-
-Os valores de [IND03](#ind03){: .cc-ref} a [IND05](#ind05){: .cc-ref} vêm da avaliação da equipe em `eval/`: 70 casos
-de desenvolvimento (12 escritos pela equipe e 58 tirados de checagens com
-ClaimReview), iteração 2, com busca e modelo de linguagem ligados. A própria
-equipe registra que esses números foram reconstruídos dos registros de
-execução de uma rodada interrompida, e não de uma rodada completa
-(`eval/ITERACOES.md`).
-
-| Indicador | O que mede | Como medir | Valor atual | Meta proposta |
-|---|---|---|---|---|
-| <span id="ind04"></span>IND04 · Acerto | Propensão alta para alegações falsas ou enganosas, baixa para verdadeiras | `eval/run.py` | 29% (20 de 70); cerca de 56% contando "média" em alegação falsa como acerto parcial | Acima de 85% |
-| <span id="ind05"></span>IND05 · Erro grave | Propensão baixa em alegação falsa, ou alta em alegação verdadeira | `eval/run.py` | 4,3% (3 de 70). Era 33% (4 de 12) antes do núcleo de decisão | Abaixo de 5% |
-| <span id="ind06"></span>IND06 · Checagem original encontrada | A checagem da agência aparece entre as fontes | `eval/run.py` (a medir) | Não medido | Acima de 70% |
-| <span id="ind07"></span>IND07 · Estabilidade da resposta | A mesma notícia, em versão curta e longa, recebe a mesma propensão | Conjunto de estabilidade (planejado) | Não medido; instabilidade observada em testes manuais | Acima de 90% |
-| <span id="ind08"></span>IND08 · Qualidade do modelo | Medida F1 macro, pior grupo e calibração | Avaliação do FakenewsBR | Ver [seção 4.2](#42-métricas-de-avaliação-fora-de-produção) | Ver requisitos de qualidade na [seção 4.2](#42-métricas-de-avaliação-fora-de-produção) |
-| <span id="ind09"></span>IND09 · Utilidade percebida | Proporção de avaliações positivas nos botões de avaliação | `feedback.jsonl` † | Sem dados: o recurso não está na `main` | Acima de 70% |
-| <span id="ind10"></span>IND10 · Retenção | Pessoas que voltam a consultar em até 30 dias | Registro de uso (pendente) | Sem medição | A definir |
-| <span id="ind11"></span>IND11 · Tempo de resposta | Tempo entre o envio e a resposta completa | Telemetria por execução (`runs/`) | Ver [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo) | Ver [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref} |
-| <span id="ind12"></span>IND12 · Desistência de compartilhar | Pessoas que dizem ter desistido de compartilhar após a resposta | Pergunta opcional após a resposta (pendente) | Sem medição | A definir |
-| <span id="ind13"></span>IND13 · Abertura de fontes | Respostas em que a pessoa abre ao menos uma fonte | Contagem de cliques nos endereços (pendente) | Sem medição | A definir |
-
-### 1.5 Escopo inicial e limitações declaradas
-
-**Entradas aceitas**
-
-| Entrada | Tratamento |
-|---|---|
-| Texto da notícia | Analisado integralmente, até 20.000 caracteres. |
-| Título | Mensagem de até 140 caracteres em uma linha; analisada como afirmação. |
-| Link | Lido somente quando o endereço pertence a um portal do catálogo. Fora do catálogo, o sistema pede que a pessoa cole o texto. † |
-
-**Entradas bloqueadas**
-
-> **Restrição de escopo ([RF03](#rf03--recusar-a-análise-de-imagens-e-vídeos){: .cc-ref}).** Imagens, vídeos, arquivos, áudios e mensagens
-> de voz não são analisados. A pessoa recebe uma mensagem de orientação, nunca
-> silêncio.
-{: .block-danger }
-
-**Limitações conhecidas**
-
-1. **O sistema não emite veredito.** A resposta é uma estimativa de propensão.
-2. **O modelo próprio não entra na avaliação** ([RN11](#rn11){: .cc-ref}). Ele mede o estilo do
-   texto e erra muito em textos curtos: ver o acerto por tamanho na
-   [seção 4.2](#42-métricas-de-avaliação-fora-de-produção).
-3. **Sem o modelo de linguagem não há julgamento das fontes**, e a resposta é
-   "indeterminada" ([RN12](#rn12){: .cc-ref}).
-4. **Notícias verdadeiras tendem a terminar em "média"**, e afirmações
-   compostas ("X, mas foi ele que criou") perdem o sentido ao serem divididas
-   ([P18](#p18){: .cc-ref}, [P19](#p19){: .cc-ref}).
-5. **Portais com acesso pago ou proteção contra robôs** limitam a leitura do
-   conteúdo ([RN07](#rn07){: .cc-ref}).
-6. **Privacidade**: o texto enviado é comparado com bases públicas e
-   consultado em serviços externos de busca. A pessoa é avisada disso no
-   início da conversa e orientada a não enviar dados pessoais. O tratamento
-   dos dados está no [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido).
-
-### 1.6 Glossário
-
-| Termo | Significado |
-|---|---|
-| Propensão | Estimativa de quão provável é que o conteúdo seja desinformação: baixa, média, alta ou indeterminada. |
-| Afirmação | Frase factual e verificável extraída do texto enviado. |
-| Selo | Classificação dada por uma agência de checagem, como "falso" ou "enganoso". |
-| Corroboração | Presença da mesma informação em veículos independentes entre si. |
-| Recibo | Registro das etapas, fontes e limitações de uma resposta. |
-| Catálogo | Lista de portais conhecidos, com a forma de coletar cada um. |
-| Modelo de linguagem | Modelo de inteligência artificial que lê e produz texto, usado para extrair afirmações e julgar a relação entre uma notícia e uma afirmação. |
-| Calibração | Ajuste para que a confiança informada pelo modelo corresponda à frequência real de acerto. |
-
-### 1.7 Personas e análise estratégica (rascunho)
-
-> **Rascunho, não validado.** As personas e a análise abaixo são hipóteses
-> redigidas a partir do levantamento da equipe e do estado do código. Não
-> vieram de entrevistas. A validação com pessoas do público-alvo é a
-> pendência [P11](#p11){: .cc-ref}.
-{: .block-warning }
-
-**Personas**
-
-| | A pessoa que recebeu a mensagem | A jornalista de checagem | O professor que ensina a avaliar fontes |
-|---|---|---|---|
-| **Diz** | "Recebi isso no grupo, será que é verdade?" | "Alguém já checou isso? Quem, e quando?" | "Quero que os alunos aprendam o caminho, não só a resposta." |
-| **Pensa** | "Não quero passar vergonha compartilhando mentira." | "Não confio em ferramenta que não mostra de onde tirou a resposta." | "Veredito pronto atrapalha mais do que ajuda." |
-| **Faz** | Encaminha a alguém de confiança, ou procura no buscador | Busca em várias agências e portais, uma por uma | Monta atividades com notícias e boatos recentes |
-| **Sente** | Insegurança; receio de ser tratada como ingênua | Pressão de tempo; desconfiança de respostas automáticas | Preocupação com a dependência de respostas prontas |
-| **Objetivo** | Saber em menos de um minuto se vale desconfiar | Triagem rápida, com fontes originais e datas | Um exemplo em que cada passo da análise apareça |
-| **Histórias** | [HU01](#hu01){: .cc-ref}, [HU02](#hu02){: .cc-ref}, [HU03](#hu03){: .cc-ref}, [HU08](#hu08){: .cc-ref}, [HU10](#hu10){: .cc-ref}, [HU12](#hu12){: .cc-ref}, [HU13](#hu13){: .cc-ref}, [HU14](#hu14){: .cc-ref} | [HU05](#hu05){: .cc-ref}, [HU06](#hu06){: .cc-ref}, [HU07](#hu07){: .cc-ref} | [HU09](#hu09){: .cc-ref}, [HU11](#hu11){: .cc-ref} |
-
-**Forças, fraquezas, oportunidades e ameaças**
-
-| **Forças** | Resposta nunca binária, com fontes e passo a passo ([RF11](#rf11--apresentar-o-passo-a-passo-da-análise){: .cc-ref}, [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}). Modelo calibrado e avaliado por grupo de origem ([seção 4.2](#42-métricas-de-avaliação-fora-de-produção)). Cada etapa tem um plano de reserva ([RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref}). Código e dados abertos |
-| **Fraquezas** | Relevância das fontes medida por palavras em comum sem o modelo de linguagem ([P02](#p02){: .cc-ref}). Modelo erra em textos curtos ([P09](#p09){: .cc-ref}). Base de checagens é uma amostra ([P08](#p08){: .cc-ref}). Custo limita o uso a poucas consultas por dia ([RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref}). Sem validação com o público-alvo ([P11](#p11){: .cc-ref}) |
-| **Oportunidades** | Períodos eleitorais aumentam a procura por checagem. Parceria com agências. Uso em sala de aula. Novos canais sobre a mesma interface de programação ([RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref}) |
-| **Ameaças** | Portais com acesso pago ou proteção contra robôs ([RN07](#rn07){: .cc-ref}). Mudança nos termos ou preços dos serviços externos. Desinformação em imagem, vídeo e áudio ([HU04](#hu04){: .cc-ref}). Tentativas de manipulação ([RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref}). Risco de a estimativa ser lida como veredito ([RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}) |
+**Público.** Pessoas leigas que recebem notícias em aplicativos de mensagem (público principal), estudantes,
+professores e jornalistas de checagem.
 
 ---
 
-## 2. Requisitos Funcionais
+## 2. Requisitos funcionais
 
-Cada requisito traz o enunciado, os critérios de aceitação e a situação no
-código. As histórias de usuário que motivam cada requisito estão na
-[seção 2.5](#25-histórias-de-usuário); as regras de negócio, na
-[seção 2.6](#26-regras-de-negócio); as pendências citadas ([P01](#p01){: .cc-ref}, [P02](#p02){: .cc-ref}…), na
-[seção 5.5](#55-pendências).
-
-**Padrão de redação dos requisitos**
-
-Todo requisito, funcional ou não funcional, segue a mesma forma:
-
-| Parte | Regra | Exemplo ([RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref}) |
-|---|---|---|
-| Verbo | No infinitivo impessoal, no início do enunciado | **Consultar** |
-| Objeto | Complemento direto do verbo, com artigo definido | **as plataformas especializadas em checagem** |
-| Complemento | Finalidade, meio ou condição, quando necessário | **para verificar se a afirmação já foi checada** |
-
-Regras de escrita:
-
-1. **O sujeito é o sistema e fica implícito.** Não se escreve "O sistema deve
-   consultar" nem se conjuga o verbo ("consulta", "consultará").
-2. **Um comportamento por requisito.** Quando o enunciado precisa de um
-   segundo verbo, ele descreve o modo do primeiro ("comparar as informações,
-   apontando onde divergem"), e não uma segunda obrigação.
-3. **Verbos verificáveis.** Preferir verbos cujo cumprimento um teste pode
-   observar: aceitar, consultar, comparar, exibir, registrar, recusar. Evitar
-   verbos vagos, como "suportar", "gerenciar" ou "tratar", e adjetivos sem
-   medida, como "rápido" ou "amigável"; a medida vai nos critérios.
-4. **Regência e crase conforme a norma.** Responder **a** algo ("respondendo a
-   elas"); oferecer algo **à** pessoa; submeter algo **ao** modelo.
-5. **Título e enunciado com o mesmo verbo.** O título é a forma curta do
-   enunciado, sem o complemento.
-6. **Nos requisitos não funcionais,** a linha "Atributo de qualidade" nomeia a
-   característica medida (por exemplo, "transparência e explicabilidade"), e
-   os critérios trazem a medida.
-7. **Critérios de aceitação no presente do indicativo,** um fato verificável
-   por item: "A entrada é classificada automaticamente em texto, título ou
-   link."
-8. **Termos do glossário** ([seção 1.6](#16-glossário)), sem estrangeirismo
-   quando houver palavra em português.
-
-### 2.1 Módulo de Entradas e Interface
-
-#### RF01 — Atender a pessoa por um robô no Telegram
-
-- **Enunciado**: Atender a pessoa por um robô no Telegram, recebendo as mensagens e respondendo a elas.
-- **Critérios de aceitação**:
-  1. O comando `/start` apresenta o que o robô faz, as entradas aceitas e o
-     aviso de privacidade.
-  2. Cada consulta recebe uma confirmação imediata e atualizações de
-     progresso durante o processamento.
-  3. Apenas uma instância do robô fica ativa por vez.
-- **Situação**: Atendido. `factcheck_mvp/telegram_bot.py`.
-
-#### RF02 — Aceitar o texto, o título ou o link de uma notícia
-
-- **Enunciado**: Aceitar como entrada o texto, o título ou o link de uma notícia.
-- **Critérios de aceitação**:
-  1. A entrada é classificada automaticamente em texto, título ou link.
-  2. O link só é acessado quando o endereço, inclusive após
-     redirecionamentos, pertence a um portal do catálogo.
-  3. Quando o link não pode ser lido, o sistema pede o texto da notícia. †
-- **Situação**: Parcial. A leitura de links é restrita aos portais do
-  catálogo, por segurança. O critério 3 depende de [P01](#p01){: .cc-ref}.
-
-#### RF03 — Recusar a análise de imagens e vídeos
-
-- **Enunciado**: Recusar a análise de imagens, vídeos, arquivos, áudios e mensagens de voz, orientando a pessoa sobre o que enviar.
-- **Critérios de aceitação**:
-  1. Imagens, vídeos, arquivos, áudios e mensagens de voz recebem uma
-     mensagem de orientação.
-  2. Nenhum conteúdo de mídia é enviado para análise.
-- **Situação**: Atendido. A cobertura de áudio e voz e a orientação sobre
-  busca reversa de imagem dependem de [P01](#p01){: .cc-ref}.
-
-### 2.2 Módulo de Coleta e Consulta a Fontes
-
-#### RF04 — Consultar as plataformas de checagem
-
-- **Enunciado**: Consultar as plataformas especializadas em checagem para verificar se a afirmação já foi checada.
-- **Critérios de aceitação**:
-  1. Cada afirmação é buscada no índice de checagens.
-  2. A busca na internet inclui uma consulta dirigida a checagens.
-  3. O selo original da agência é preservado e exibido.
-- **Situação**: Parcial. O índice de checagens é alimentado por RSS e ClaimReview de 8 agências (`ingestor.py`), com selos tipados por tabela (`selos.py`), e é um atalho opcional (`INDICE_CHECAGENS`). O caminho principal é a busca aberta. O histórico anterior aos feeds depende de [P08](#p08){: .cc-ref}.
-
-#### RF05 — Consultar os principais veículos de comunicação
-
-- **Enunciado**: Consultar os principais veículos de comunicação do país para verificar se a informação foi publicada. A meta é cobrir os 50 principais.
-- **Critérios de aceitação**:
-  1. São feitas duas consultas de busca por afirmação, com resultados
-     guardados por uma hora.
-  2. O conteúdo das três fontes mais próximas é lido, não apenas o título.
-  3. A falta da chave de busca não interrompe a resposta: o sistema segue
-     apenas com o índice de checagens e registra a limitação.
-- **Situação**: Parcial. O catálogo tem 23 veículos gerais: 7 com curadoria da equipe e 16 incluídos por descoberta automática, vários com nome errado (lista na [seção 5.3](#53-canais-de-notícias); [P05](#p05){: .cc-ref}). Faltam 27 para a meta de 50 ([P10](#p10){: .cc-ref}).
-
-#### RF06 — Comparar as informações das fontes
-
-- **Enunciado**: Comparar as informações encontradas nas fontes, apontando onde elas concordam e onde divergem.
-- **Critérios de aceitação**:
-  1. Republicações do mesmo texto e veículos do mesmo grupo econômico contam
-     como uma única fonte ([RN03](#rn03){: .cc-ref}).
-  2. Selos diferentes entre agências são apontados como divergência.
-  3. Datas diferentes para o mesmo fato são apontadas como divergência.
-- **Situação**: Atendido. A corroboração é por postura: um voto por grupo de fontes independentes (`corroboracao.py`, `decisao.py`), e datas e selos divergentes entre grupos são apontados.
-
-### 2.3 Módulo de Análise Inteligente
-
-#### RF08 — Submeter o texto ao modelo próprio
-
-- **Enunciado**: Submeter o texto enviado ao modelo de aprendizado de máquina treinado pela equipe.
-- **Critérios de aceitação**:
-  1. O modelo analisa o texto da pessoa, uma vez por consulta.
-  2. O modelo só opina em textos com 80 palavras ou mais ([RN04](#rn04){: .cc-ref}); abaixo
-     disso, a etapa é registrada como "pulada", com o motivo. †
-  3. Sem o modelo configurado, o sistema usa um substituto identificado como
-     tal, cujo número não é exibido como medição.
-- **Situação**: Parcial. O modelo BERTimbau calibrado está na `main` (`FAKE_MODEL_PATH`); o critério 2 depende de [P01](#p01){: .cc-ref}. Desde o pull request nº 4, a probabilidade não entra na avaliação ([RN11](#rn11){: .cc-ref}). A especificação do modelo está na [seção 4.1](#41-especificação-da-tarefa).
-
-#### RF09 — Exibir a estimativa de confiança do modelo
-
-- **Enunciado**: Exibir a probabilidade calculada pelo modelo como estimativa, e não como certeza.
-- **Critérios de aceitação**:
-  1. A probabilidade é calibrada antes de ser exibida.
-  2. O valor aparece acompanhado do nome do modelo.
-  3. A confiança de cada sinal usado na avaliação é exibida.
-- **Situação**: Atendido. A probabilidade aparece como "sinal de estilo do texto (não indica veracidade)".
-
-#### RF10 — Identificar padrões de desinformação no texto
-
-- **Enunciado**: Identificar, com um modelo de linguagem, os padrões linguísticos e estruturais típicos de desinformação.
-- **Critérios de aceitação**:
-  1. Os padrões pertencem a uma lista fechada: apelo à urgência, tom
-     alarmista, fonte vaga, ausência de data ou local, título sensacionalista.
-  2. Cada padrão encontrado vem com o trecho que o evidencia.
-  3. Sem o modelo de linguagem, regras fixas fazem a mesma análise.
-  4. O conteúdo analisado é tratado como dado, nunca como instrução. †
-- **Situação**: Atendido. Os padrões aparecem como sinal de estilo e não entram na avaliação ([RN11](#rn11){: .cc-ref}).
-
-### 2.4 Módulo de Consolidação e Apresentação
-
-#### RF07 — Apresentar as fontes e seus endereços
-
-- **Enunciado**: Apresentar as fontes consultadas com os respectivos endereços.
-- **Critérios de aceitação**:
-  1. Até três fontes aparecem lado a lado, com portal, selo, trecho citado e
-     endereço.
-  2. A resposta indica se o conteúdo da fonte foi lido ou se só o título foi
-     considerado; a fonte lida por inteiro pesa mais ([RN10](#rn10){: .cc-ref}).
-  3. Páginas iniciais e institucionais não contam como evidência ([RN05](#rn05){: .cc-ref}).
-- **Situação**: Atendido. Sem julgamento de conteúdo, uma fonte aparece na resposta, mas não vota ([RN12](#rn12){: .cc-ref}).
-
-#### RF11 — Apresentar o passo a passo da análise
-
-- **Enunciado**: Apresentar as etapas executadas na análise e a situação de cada uma.
-- **Critérios de aceitação**:
-  1. Cada etapa aparece com nome e situação: concluída, parcial, pulada ou
-     com falha.
-  2. A falha de uma etapa não interrompe a resposta; vira uma limitação
-     declarada.
-  3. As limitações da consulta são listadas.
-- **Situação**: Atendido.
-
-#### RF12 — Apresentar a avaliação como propensão, e não como veredito
-
-- **Enunciado**: Apresentar a avaliação em uma escala de propensão, sem responder "fato" nem "fake".
-- **Critérios de aceitação**:
-  1. A avaliação usa a escala baixa, média, alta ou indeterminada ([RN01](#rn01){: .cc-ref}).
-  2. Expressões como "é falso" e "é verdade" são proibidas no texto da
-     resposta, e um teste automatizado verifica isso ([RN01](#rn01){: .cc-ref}).
-  3. A conclusão é redigida por modelos de texto fixos; o modelo de linguagem
-     não redige a conclusão ([RN08](#rn08){: .cc-ref}).
-- **Situação**: Atendido.
-
-#### RF13 — Fundamentar a avaliação com evidências
-
-- **Enunciado**: Fundamentar cada avaliação com as evidências encontradas, tanto as que aumentam quanto as que reduzem a propensão.
-- **Critérios de aceitação**:
-  1. A justificativa lista o que aumenta e o que reduz a propensão. Uma
-     fonte que refuta a afirmação conta contra ela, qualquer que seja o selo
-     ([RN02](#rn02){: .cc-ref}).
-  2. Sem evidência relevante, a avaliação é "indeterminada".
-- **Situação**: Atendido. Nenhuma avaliação sai de "indeterminada" sem ao menos uma fonte com postura ou um selo aplicável (`decisao.py`).
-
-#### RF14 — Oferecer à pessoa os elementos para uma decisão autônoma
-
-- **Enunciado**: Oferecer à pessoa os elementos para que ela avalie a notícia por conta própria.
-- **Critérios de aceitação**:
-  1. Toda resposta traz três perguntas-guia: a data é atual, quem assina, e
-     se a informação aparece em mais de um veículo independente.
-  2. Toda resposta declara que a avaliação não é um veredito.
-- **Situação**: Atendido.
-
-#### RF15 — Disponibilizar a consulta por uma página na internet
-
-- **Enunciado**: Disponibilizar a mesma consulta por uma página na internet, além do Telegram.
-- **Critérios de aceitação**:
-  1. A lógica de checagem fica separada do canal de conversa.
-  2. Existe uma interface de programação com entrada e saída tipadas.
-  3. Existe uma página mínima que usa a mesma lógica.
-- **Situação**: Atendido. Os pontos de acesso estão na
-  [seção 5.4](#54-interfaces-e-serviços-externos).
-
-### 2.5 Histórias de usuário
-
-As prioridades (essencial, importante, desejável, fora do escopo) são uma
-**proposta**, a validar pela equipe. Os critérios de aceitação de cada
-história são os do requisito indicado.
-
-| História | Eu, como… | quero… | para… | Requisito | Prioridade |
+| ID | Nome | Descrição | Prioridade | Status | Onde está implementado |
 |---|---|---|---|---|---|
-| **Épico 1: consultar uma notícia** | | | | | |
-| <span id="hu01"></span>HU01 | pessoa que recebeu uma mensagem | enviar o texto ao robô | saber se devo desconfiar | [RF01](#rf01--atender-a-pessoa-por-um-robô-no-telegram){: .cc-ref}, [RF02](#rf02--aceitar-o-texto-o-título-ou-o-link-de-uma-notícia){: .cc-ref} | Essencial |
-| <span id="hu02"></span>HU02 | pessoa com pressa | enviar só o link | não precisar copiar o texto | [RF02](#rf02--aceitar-o-texto-o-título-ou-o-link-de-uma-notícia){: .cc-ref} | Importante |
-| <span id="hu03"></span>HU03 | pessoa que enviou uma imagem | ser avisada de que ela não é analisada | não ficar sem resposta | [RF03](#rf03--recusar-a-análise-de-imagens-e-vídeos){: .cc-ref} | Essencial |
-| <span id="hu04"></span>HU04 | pessoa que quer checar imagem ou vídeo | que a mídia seja analisada | avaliar o que recebi | Nenhum | Fora do escopo |
-| **Épico 2: reunir evidências** | | | | | |
-| <span id="hu05"></span>HU05 | jornalista | saber se uma agência já checou a afirmação | não repetir trabalho | [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref} | Essencial |
-| <span id="hu06"></span>HU06 | pessoa que consulta | saber se outros veículos publicaram a informação | avaliar se ela é isolada | [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} | Essencial |
-| <span id="hu07"></span>HU07 | pessoa que consulta | ver onde as fontes concordam e discordam | formar minha opinião | [RF06](#rf06--comparar-as-informações-das-fontes){: .cc-ref} | Importante |
-| **Épico 3: analisar o texto** | | | | | |
-| <span id="hu08"></span>HU08 | pessoa que consulta | uma estimativa do modelo | ter um indício a mais | [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref}, [RF09](#rf09--exibir-a-estimativa-de-confiança-do-modelo){: .cc-ref} | Importante |
-| <span id="hu09"></span>HU09 | pessoa que consulta | saber que marcas de boato o texto tem | aprender a reconhecê-las | [RF10](#rf10--identificar-padrões-de-desinformação-no-texto){: .cc-ref} | Desejável |
-| **Épico 4: entender a resposta** | | | | | |
-| <span id="hu10"></span>HU10 | pessoa que consulta | os endereços das fontes | conferir por conta própria | [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref}, [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref} | Essencial |
-| <span id="hu11"></span>HU11 | professor | ver cada passo da análise | usar em aula | [RF11](#rf11--apresentar-o-passo-a-passo-da-análise){: .cc-ref} | Importante |
-| <span id="hu12"></span>HU12 | pessoa que consulta | uma avaliação sem veredito | decidir por mim | [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}, [RF14](#rf14--oferecer-à-pessoa-os-elementos-para-uma-decisão-autônoma){: .cc-ref} | Essencial |
-| <span id="hu13"></span>HU13 | pessoa que consulta | avaliar se a resposta ajudou | que o sistema melhore | [IND09](#ind09){: .cc-ref} | Desejável |
-| **Épico 5: ampliar os canais** | | | | | |
-| <span id="hu14"></span>HU14 | pessoa sem Telegram | consultar por uma página na internet | usar sem instalar nada | [RF15](#rf15--disponibilizar-a-consulta-por-uma-página-na-internet){: .cc-ref} | Importante |
-| <span id="hu15"></span>HU15 | pessoa que usa outro aplicativo de mensagem | consultar por ele | não trocar de aplicativo | [RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref} | Desejável |
-
-### 2.6 Regras de negócio
-
-Regras já escritas como critério de aceitação não são repetidas aqui: a
-coluna "Onde está definida" aponta para o texto.
-
-| Regra | Enunciado | Onde está definida |
-|---|---|---|
-| <span id="rn01"></span>RN01 | A resposta nunca é binária | [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}, critérios 1 e 2 |
-| <span id="rn02"></span>RN02 | A relação entre a fonte e a afirmação prevalece sobre o selo: um selo "verdadeiro" em uma peça que refuta a afirmação conta contra a afirmação | Aqui. Aplica-se a [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref} e [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref} |
-| <span id="rn03"></span>RN03 | Republicações e veículos do mesmo grupo econômico contam como uma fonte | [RF06](#rf06--comparar-as-informações-das-fontes){: .cc-ref}, critério 1 |
-| <span id="rn04"></span>RN04 | O modelo próprio só opina em textos com 80 palavras ou mais | [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref}, critério 2 |
-| <span id="rn05"></span>RN05 | Páginas iniciais e institucionais não são evidência | [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref}, critério 3 |
-| <span id="rn06"></span>RN06 | Nenhum domínio é bloqueado por lista; o filtro é a relevância para a consulta | [RNF02](#rnf02--apresentar-a-avaliação-com-imparcialidade){: .cc-ref} |
-| <span id="rn07"></span>RN07 | O sistema não contorna acesso pago nem proteção contra robôs | Aqui. Aplica-se a [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} |
-| <span id="rn08"></span>RN08 | O modelo de linguagem não redige a conclusão | [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}, critério 3 |
-| <span id="rn09"></span>RN09 | Textos de opinião ou sátira não são classificados como fato | [RNF02](#rnf02--apresentar-a-avaliação-com-imparcialidade){: .cc-ref} |
-| <span id="rn10"></span>RN10 | Uma fonte lida por inteiro vale mais do que uma lida só pelo título | Aqui. Aplica-se a [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} e [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref} |
-| <span id="rn11"></span>RN11 | O modelo próprio e os padrões textuais não entram na avaliação: aparecem como sinais de estilo | Aqui. Aplica-se a [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref}, [RF09](#rf09--exibir-a-estimativa-de-confiança-do-modelo){: .cc-ref} e [RF10](#rf10--identificar-padrões-de-desinformação-no-texto){: .cc-ref} |
-| <span id="rn12"></span>RN12 | Sem julgamento do conteúdo das fontes, não há avaliação: a resposta é "indeterminada" | Aqui. Aplica-se a [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref} |
+| <span id="rf01"></span>RF01 | Atender pelo Telegram | Receber mensagens e respondê-las por um robô no Telegram. O comando `/start` apresenta o que o robô faz, as entradas aceitas e o aviso de privacidade; cada consulta recebe confirmação imediata e até 3 atualizações de progresso; só uma instância do robô fica ativa por vez. | Alta | Implementado | `factcheck_mvp/telegram_bot.py` |
+| <span id="rf02"></span>RF02 | Aceitar texto, título ou link | Classificar a entrada em link (começa com `http`/`www`), título (até 140 caracteres em uma linha) ou texto (até 20.000 caracteres). O link só é lido quando o endereço, inclusive depois de redirecionamentos, pertence a um portal do catálogo; quando não pode ser lido, o sistema pede que a pessoa cole o texto. | Alta | Implementado | `telegram_bot.py` (`classificar_entrada`, `_texto_link`), `api.py` |
+| <span id="rf03"></span>RF03 | Recusar mídia com orientação | Responder a imagem, vídeo, arquivo, áudio ou mensagem de voz com uma orientação (enviar o texto; fazer busca reversa da imagem), sem enviar a mídia para análise. | Alta | Implementado | `telegram_bot.py` (`_midia`, `MIDIA_MSG`) |
+| <span id="rf04"></span>RF04 | Consultar checagens existentes | Procurar, para cada afirmação, checagens já publicadas: (a) na base própria de checagens (21.976 registros de 9 agências, com selo tipado); (b) na Google Fact Check Tools, quando houver chave configurada; (c) na web, com consulta dirigida aos domínios das agências. O selo original da agência é preservado. | Alta | Implementado | `indice.py`, `ingestor.py`, `selos.py`, `factcheck_api.py`, `agente.py` |
+| <span id="rf05"></span>RF05 | Consultar veículos de comunicação | Buscar na web (SerpAPI) o que os veículos publicaram sobre cada afirmação e ler o conteúdo das páginas encontradas, não só o título. Sem chave de busca, o sistema segue só com as checagens e declara a limitação. | Alta | Parcial: o catálogo tem 23 veículos gerais, contra a meta de 50 (ver pendência 2) | `serpapi_layer.py`, `agente.py`, `aprofundar.py`, `extracao.py` |
+| <span id="rf06"></span>RF06 | Comparar as fontes | Agrupar republicações e veículos do mesmo grupo como uma única fonte e apontar divergências de selo e de data entre as fontes. | Alta | Implementado | `corroboracao.py`, `decisao.py` |
+| <span id="rf07"></span>RF07 | Apresentar as fontes | Mostrar até 3 fontes na resposta (as demais no relatório completo), cada uma com veículo, o que ela faz frente à afirmação (confirma, contesta ou só relata), selo da agência, trecho citado, endereço, se o texto foi lido por inteiro e o nível de confiabilidade do site. Páginas iniciais e de seção não aparecem como evidência. | Alta | Implementado | `telegram_bot.py` (`formatar`), `api.py`, `pipeline.py`, `confiabilidade.py` |
+| <span id="rf08"></span>RF08 | Submeter o texto ao modelo próprio | Submeter o texto enviado ao modelo de aprendizado de máquina da equipe (BERTimbau calibrado) como sinal de estilo, fora da avaliação ([RN11](#rn11){: .cc-ref}). Sem o modelo configurado, usar um substituto identificado como provisório. | Baixa | Parcial: o modelo é carregado por `FAKE_MODEL_PATH`, que não está configurado na operação atual; o piso de 80 palavras ([RN04](#rn04){: .cc-ref}) não está implementado | `modelo_fake.py` |
+| <span id="rf09"></span>RF09 | Exibir a estimativa do modelo | Exibir a probabilidade calibrada do modelo, com o nome do modelo, como "sinal de estilo do texto (não indica veracidade)". Com o substituto provisório, exibir "em treino" sem número. | Baixa | Parcial: depende de [RF08](#rf08){: .cc-ref} | `pipeline.py`, `telegram_bot.py` |
+| <span id="rf10"></span>RF10 | Identificar padrões de desinformação | Apontar, numa lista fechada (apelo à urgência, tom alarmista, fonte vaga, ausência de data ou local, título sensacionalista), os padrões presentes no texto, com o trecho que os evidencia, fora da avaliação ([RN11](#rn11){: .cc-ref}). | Baixa | Implementado: regras fixas por padrão; o modelo de linguagem é opcional (`PADROES_LLM=1`) | `padroes_llm.py` |
+| <span id="rf11"></span>RF11 | Apresentar o passo a passo | Mostrar as etapas executadas com a situação de cada uma (concluída, parcial, pulada, com falha) e listar as limitações da consulta. A falha de uma etapa não interrompe a resposta. | Alta | Implementado | `pipeline.py`, `agregador.py`, `telemetria.py` |
+| <span id="rf12"></span>RF12 | Apresentar propensão, não veredito | Apresentar a avaliação na escala baixa, média, alta ou indeterminada, com a frase "… propensão de ser fake news", sem nunca afirmar que algo "é falso" ou "é verdade" na conclusão do sistema. | Alta | Implementado | `agregador.py` (`verificar_neutralidade`), `decisao.py` |
+| <span id="rf13"></span>RF13 | Fundamentar a avaliação | Justificar a avaliação com as evidências que aumentam e as que reduzem a propensão. Sem nenhuma fonte que confirme ou conteste, nem selo aplicável, a avaliação é "indeterminada". | Alta | Implementado | `decisao.py` (`decidir`), `juiz_llm.py` |
+| <span id="rf14"></span>RF14 | Dar elementos para decisão autônoma | Encerrar toda resposta com 3 perguntas-guia (a data é atual? quem assina? aparece em mais de um veículo independente?) e com a frase "Isso não é um veredito". | Média | Parcial: a página traz a frase; no robô, a resposta mostra só o resumo de uma linha, que não a inclui (o aviso aparece só no `/start`) | `agregador.py` (`perguntas_guia`), `decisao.py`, `api.py` |
+| <span id="rf15"></span>RF15 | Oferecer página e interface de programação | Oferecer a mesma consulta por uma página na internet (`GET /`) e por uma interface de programação com entrada e saída tipadas (`POST /checar`), além de `GET /saude` e `GET /portais`. | Alta | Implementado | `api.py`, `schemas.py` |
+| <span id="rf16"></span>RF16 | Registrar a avaliação da pessoa | Oferecer os botões "👍 Ajudou" e "👎 Não ajudou" após a resposta e gravar o voto com o texto consultado e a propensão, sem nome nem identificador da pessoa. | Média | Parcial: só no Telegram; a página na internet não tem os botões | `telegram_bot.py` (`registrar_feedback`) |
+| <span id="rf17"></span>RF17 | Priorizar a base de checagens | Julgar primeiro as checagens da base; pular a busca na web quando houver checagem aplicável (página lida, que confirma ou refuta a mesma afirmação, com citação verificada, selo com direção e data compatível) e registrar "web pulada: checagem aplicável na base". | Alta | Implementado | `pipeline.py` (`_fase_base`), `aplicabilidade.py` |
+| <span id="rf18"></span>RF18 | Informar onde a evidência foi encontrada | Informar se a avaliação veio da base de checagens ou de outras fontes da web, com aviso explícito quando a afirmação não foi encontrada na base. | Média | Parcial: a página e a interface informam; o robô do Telegram não | `schemas.py` (`onde_encontrado`), `api.py` |
+| <span id="rf19"></span>RF19 | Considerar a data da afirmação | Comparar marcadores temporais do texto ("hoje", "ontem", "nesta semana", "agora", "acaba de") com a data de publicação das fontes; fonte de outro período perde peso e recebe o aviso "anterior ao período do texto". | Média | Implementado | `aplicabilidade.py`, `decisao.py`, `telegram_bot.py` |
+| <span id="rf20"></span>RF20 | Sinalizar mensagem não checável como fato | Declarar como limitação, e não classificar como fato: relato de segunda mão ("ouvi dizer"), opinião ou sátira, e afirmação vaga (comparação sem indicador ou período), pedindo à pessoa o dado que falta. | Média | Implementado | `pipeline.py` (`RUMOR_RE`, `OPINIAO_SATIRA_RE`, `VAGO_RE`), `decisao.py` |
+| <span id="rf21"></span>RF21 | Atualizar a base de checagens | Atualizar a base de checagens todo dia, com as publicações novas das agências (RSS, API do WordPress e mapas do site), e submeter a atualização a revisão humana antes de entrar no sistema. | Média | Parcial: o fluxo existe, mas ainda não rodou no GitHub (falta liberar a permissão de criar pedidos de integração) | `.github/workflows/atualizar-base.yml`, `ingestor.py` |
 
 ---
 
-## 3. Requisitos Não-Funcionais
+## 3. Requisitos não funcionais
 
-### RNF01 — Explicar como cada avaliação foi obtida
-
-**Atributo de qualidade:** transparência e explicabilidade.
-
-| Critério | Verificação |
-|---|---|
-| Toda resposta lista as etapas executadas e a situação de cada uma. | Teste do fluxo completo (`tests/test_pipeline.py`). |
-| Todo sinal tem origem identificada (checagem, postura das fontes, e, à parte, sinais de estilo) e peso numérico. | Estrutura `SinalAnalise` em `factcheck_mvp/schemas.py`. |
-| A justificativa separa o que aumenta do que reduz a propensão. | `factcheck_mvp/agregador.py`. |
-| A avaliação é calculada por uma única função, com parâmetros documentados, não por um modelo de linguagem. | `decidir` em `factcheck_mvp/decisao.py`. |
-| Um componente provisório é sempre identificado como tal. | `tests/test_bot_modelo.py`. |
-| As limitações da consulta são declaradas na resposta. | Campo `limitacoes` do relatório. |
-
-**Situação**: Atendido. Os parâmetros da decisão são iniciais e estão sendo
-ajustados com a avaliação em `eval/`.
-
-### RNF02 — Apresentar a avaliação com imparcialidade
-
-**Atributo de qualidade:** imparcialidade e neutralidade da apresentação.
-
-| Critério | Verificação |
-|---|---|
-| A resposta cumpre o [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref}: sem conclusão binária e com conclusão redigida por modelos de texto fixos. | Lista de expressões proibidas e teste de neutralidade. |
-| A resposta não contém adjetivos de julgamento nem termos partidários. | `verificar_neutralidade` em `factcheck_mvp/agregador.py`. |
-| Nenhum domínio é bloqueado por lista: o filtro é a relevância para a consulta ([RN06](#rn06){: .cc-ref}). | `factcheck_mvp/pipeline.py`. |
-| Textos de opinião ou sátira não são classificados como fato ([RN09](#rn09){: .cc-ref}). | Regra de contenção em `factcheck_mvp/pipeline.py`. |
-
-**Situação**: Atendido.
-
-### RNF03 — Registrar a origem de cada fonte e de cada etapa
-
-**Atributo de qualidade:** rastreabilidade e auditoria de fontes.
-
-| Critério | Verificação |
-|---|---|
-| Toda fonte exibida tem endereço, portal, tipo e trecho citado. | Estrutura `FonteEvidencia`. |
-| A resposta informa se o conteúdo da fonte foi lido. | Campo `corpo_lido`. |
-| O selo original da agência é preservado. | Campo `selo_original`. |
-| Cada etapa registra os endereços que usou. | Estrutura `EtapaRecibo`. |
-| A inclusão de um portal no catálogo passa por aprovação. | Parcial: o portal descoberto não vale na consulta em curso, mas é gravado no catálogo ([P05](#p05){: .cc-ref}). |
-| As execuções ficam registradas para auditoria posterior. | Telemetria: um registro por execução em `runs/`, com etapas, fontes e chamadas (`telemetria.py`). |
-
-**Situação**: Parcial.
-
-### RNF04 — Redigir as respostas em linguagem simples
-
-**Atributo de qualidade:** usabilidade e acessibilidade.
-
-| Critério | Verificação |
-|---|---|
-| A primeira linha da resposta traz a avaliação, com um símbolo de cor. | `gerar_header` em `factcheck_mvp/agregador.py`. |
-| A segunda linha resume o motivo em uma frase. | Campo `why_1linha`. |
-| A resposta cabe em uma mensagem do Telegram e nunca é cortada no meio de um endereço. | `formatar` em `factcheck_mvp/telegram_bot.py`. |
-| Mensagens de erro não expõem detalhes técnicos. | Tratamento de exceções no robô e na interface de programação. |
-| A linguagem foi validada com pessoas leigas. | Pendente ([P11](#p11){: .cc-ref}). |
-
-**Situação**: Parcial. A resposta ainda usa termos técnicos como "corpo lido"
-e nomes internos dos sinais.
-
-### RNF05 — Permitir novos canais sem alterar a lógica de checagem
-
-**Atributo de qualidade:** extensibilidade e arquitetura modular.
-
-| Critério | Verificação |
-|---|---|
-| A lógica de checagem não depende do canal de conversa. | `factcheck_mvp/pipeline.py` não importa o Telegram. |
-| A entrada e a saída são tipadas e compartilhadas por todos os canais. | `factcheck_mvp/schemas.py`. |
-| O modelo próprio pode ser trocado sem alterar o fluxo. | Interface `DetectorFake` em `factcheck_mvp/modelo_fake.py`. |
-| A busca no índice pode ser trocada sem alterar o fluxo. | Método `Indice.buscar`. |
-| Um novo canal, como o WhatsApp, é um adaptador sobre a mesma interface de programação. | Pendente ([P17](#p17){: .cc-ref}). |
-
-**Situação**: Atendido para Telegram e página na internet.
-
-### RNF06 a RNF09 — Requisitos próprios de inteligência artificial
-
-Desempenho, segurança, confiabilidade e ética têm critérios específicos em um
-produto de inteligência artificial. Eles estão definidos, com valores medidos,
-no documento de [Engenharia de Produto de Inteligência Artificial](../produto-de-ia/):
-
-| Requisito | Trata de |
-|---|---|
-| [RNF06 — Responder dentro dos limites de tempo e de custo](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo) | Latência, vazão, capacidade diária, controle de custo e reaproveitamento de respostas |
-| [RNF07 — Proteger os dados e o sistema contra uso indevido](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido) | Dados em trânsito e em repouso, acesso a endereços, injeção de instruções, manipulação |
-| [RNF08 — Manter a resposta disponível diante de falhas](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas) | Falhas de etapa, estabilidade da resposta, retreino, monitoramento |
-| [RNF09 — Medir e mitigar os vieses do modelo e dos dados](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados) | Vieses do conjunto de dados e do modelo, e salvaguardas do produto |
-
-### Restrições
-
-| Restrição | Origem |
-|---|---|
-| Mensagens de até 4.096 caracteres no Telegram | Plataforma |
-| Limites diários de buscas e de chamadas ao modelo de linguagem (valores no [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref}) | Custo: serviços em plano gratuito ou de baixo custo |
-| Treino sem placa de vídeo própria | Infraestrutura da equipe |
-| Arquivos grandes fora do controle de versão | Limite de armazenamento do repositório |
-| Só texto em português | Escopo inicial e dados disponíveis |
-| Conteúdo de terceiros usado conforme os termos de cada fonte | Legal |
+| ID | Categoria | Nome | Critério mensurável | Prioridade | Status | Onde está implementado |
+|---|---|---|---|---|---|---|
+| <span id="rnf01"></span>RNF01 | Transparência | Explicar como a avaliação foi obtida | 100% das respostas trazem etapas, fontes e limitações; a avaliação é calculada por uma única função determinística com parâmetros documentados, e não por um modelo de linguagem. | Alta | Implementado | `decisao.py` (`decidir`), `schemas.py`; `tests/test_pipeline.py`, `tests/test_decisao.py` |
+| <span id="rnf02"></span>RNF02 | Neutralidade | Apresentar a avaliação com imparcialidade | 0 ocorrências, no texto produzido pelo sistema, de conclusão binária ("é falso", "é verdade"), adjetivo de julgamento ou termo partidário; selo de agência só aparece atribuído a ela ([RN17](#rn17){: .cc-ref}). | Alta | Implementado | `agregador.py` (`verificar_neutralidade`); `tests/test_schemas.py` |
+| <span id="rnf03"></span>RNF03 | Rastreabilidade | Registrar a origem de cada fonte e de cada etapa | Toda fonte exibida tem endereço, veículo e trecho citado; toda execução grava um registro em `runs/<id>/trace.jsonl` com etapas, fontes, chamadas ao modelo de linguagem e motivos de descarte; site novo descoberto vai para `catalogo_propostas.json` e não vale como fonte curada sem aprovação. | Alta | Implementado | `telemetria.py`, `cli.py trace`, `descoberta_site.py` |
+| <span id="rnf04"></span>RNF04 | Usabilidade | Redigir em linguagem simples | A 1ª linha da resposta traz a avaliação com símbolo de cor; a 2ª, o motivo em uma frase; nenhum termo interno ("avaliador", "corpo lido", nomes de módulos) aparece para a pessoa; a linguagem é validada com ao menos 5 pessoas do público principal. | Média | Parcial: a resposta ainda mostra termos internos nas etapas ("avaliador", "Novos sites no catálogo"), e não houve validação com o público | `agregador.py`, `telegram_bot.py` |
+| <span id="rnf05"></span>RNF05 | Manutenibilidade | Separar a lógica de checagem dos canais | O fluxo de checagem não importa nenhum módulo de canal; robô, página e interface usam as mesmas estruturas de entrada e saída; modelo próprio, índice e modelo de linguagem são trocados por configuração, sem alterar o fluxo. | Alta | Implementado | `pipeline.py`, `schemas.py`, `modelo_fake.py`, `llm.py` |
+| <span id="rnf06"></span>RNF06 | Desempenho | Responder dentro dos limites de tempo e de custo | (a) Mediana do tempo de resposta abaixo de 30 s; (b) até 30 requisições por minuto por endereço de rede na interface; (c) no máximo 100 buscas na web por dia (configurável); (d) buscas repetidas em até 1 hora vêm de cache. | Alta | Parcial: (b), (c) e (d) atendidos; (a) não: em 14/10, 14 s quando a base resolve e 44 a 52 s quando a consulta vai à web | `api.py` (`_rate_ok`), `serpapi_layer.py`, `config.py` |
+| <span id="rnf07"></span>RNF07 | Segurança e privacidade | Proteger os dados e o sistema contra uso indevido | Nenhuma chave de serviço no código, no histórico do repositório ou nos registros de execução (redação automática); link enviado pela pessoa só é lido se for de portal do catálogo, com até 1,5 MB e 15 s; julgamento de fonte só vale com trecho citado que exista na página (semelhança ≥ 0,9); aviso de privacidade no início da conversa; o texto das páginas é delimitado no prompt e tratado como dado. | Alta | Parcial: não há delimitação explícita contra injeção de instruções no prompt, nem prazo de retenção dos registros (`runs/`, `feedback.jsonl`) | `telemetria.py` (`redigir`), `telegram_bot.py`, `juiz_llm.py`, `config.py` |
+| <span id="rnf08"></span>RNF08 | Confiabilidade | Manter a resposta diante de falhas | A falha de qualquer etapa vira limitação declarada, sem interromper a resposta; a busca na web tem 1 nova tentativa em queda de conexão; o modelo de linguagem tem modelo reserva e, por último, regras fixas; sem julgamento das fontes, a resposta é "indeterminada" ([RN12](#rn12){: .cc-ref}). | Alta | Implementado | `pipeline.py`, `serpapi_layer.py`, `llm.py`, `llm_openrouter.py` |
+| <span id="rnf09"></span>RNF09 | Ética | Medir e mitigar vieses do modelo e dos dados | Toda avaliação do modelo relata acerto por grupo de origem, por canal e por tamanho do texto; metas da próxima versão: acurácia no pior grupo ≥ 0,70, acerto em notícias verdadeiras com menos de 80 palavras ≥ 0,85, erro de calibração ≤ 0,05. | Média | Parcial: medido na versão R0 (pior grupo 0,575); metas não atingidas; viés por tema e posição política não medido | Repositório `thiago-cg/FakenewsBR`; `eval/` |
+| <span id="rnf10"></span>RNF10 | Compatibilidade | Respeitar os limites do canal | Toda mensagem do robô tem no máximo 4.096 unidades UTF-16 (limite do Telegram) e nunca é cortada no meio de um endereço. | Alta | Implementado | `telegram_bot.py` (`_cortar_telegram`) |
+| <span id="rnf11"></span>RNF11 | Manutenibilidade | Verificar cada mudança automaticamente | 100% dos testes automatizados passam antes de cada integração (hoje 1.214); os testes rodam sozinhos a cada envio ao repositório; a avaliação do sistema é reproduzível sem rede, por gravação das chamadas externas. | Média | Parcial: os testes rodam à mão; não há integração contínua para os testes | `tests/`, `eval/`, `replay.py` |
+| <span id="rnf12"></span>RNF12 | Operabilidade | Expor o estado do serviço | `GET /saude` informa o uso diário da busca e o teto, e a validade da chave do modelo de linguagem, com aviso a menos de 5 dias do vencimento; o robô avisa quando a chave é recusada; toda variável de configuração lida pelo código está documentada no exemplo de configuração (verificado por teste). | Média | Implementado | `api.py`, `llm_openrouter.py` (`status_chave`), `.env.mvp.example` |
+| <span id="rnf13"></span>RNF13 | Qualidade dos dados | Manter a qualidade da base de checagens | No conjunto de referência do índice, a checagem correta aparece entre as 3 primeiras em ≥ 75% das consultas e a taxa de falso positivo é ≤ 10%; a atualização diária é barrada quando o critério falha; checagens reservadas para avaliação nunca entram na base. | Alta | Implementado: 0,86 e 9,2% em 14/10 | `scripts/bench_indice_checagens.py --gate`, `checagens_holdout_excluidas.json` |
 
 ---
 
-## 4. Requisitos do Modelo de Aprendizado de Máquina e dos Dados
+## 4. Regras de negócio
 
-### 4.1 Especificação da tarefa
-
-> **Fonte única dos números do modelo e dos dados.** Os valores desta seção
-> não se repetem em outro lugar: os demais pontos, neste documento e no de
-> produto, apontam para cá.
-{: .block-tip }
-
-| Item | Especificação |
-|---|---|
-| Tarefa | Classificação binária de texto em português. |
-| Entrada | Texto da notícia, truncado em 192 unidades de texto do modelo. |
-| Saída | Probabilidade calibrada, entre 0 e 1, de o texto ser desinformação. |
-| Modelo | BERTimbau base (`neuralmind/bert-base-portuguese-cased`), ajustado no conjunto FakenewsBR versão 6, execução R0. |
-| Calibração | Método de Platt, ajustado em um conjunto separado do treino e do teste. |
-| Condição de uso | Textos com 80 palavras ou mais †. Na `main`, o modelo roda em qualquer texto. |
-| Papel na avaliação | Nenhum: fica fora da avaliação e aparece como sinal de estilo ([RN11](#rn11){: .cc-ref}). Nas sondas da equipe, o modelo não distingue uma afirmação da sua negação e muda de resultado só pela caixa das letras (`docs/review/RELATORIO.md`, item D4). |
-
-### 4.2 Métricas de avaliação fora de produção
-
-Conjunto de teste com 13.661 textos, separado por agrupamento de textos
-semelhantes para que nenhum quase duplicado apareça no treino e no teste.
-
-| Métrica | Valor medido |
-|---|---:|
-| Acurácia | 0,816 |
-| Medida F1 macro | 0,778 |
-| Medida F1 da classe desinformação | 0,870 |
-| Precisão na classe desinformação | 0,903 |
-| Revocação na classe desinformação | 0,839 |
-| Precisão na classe verdadeira | 0,630 |
-| Revocação na classe verdadeira | 0,753 |
-| Área sob a curva característica de operação do receptor | 0,890 |
-| Área sob a curva de precisão e revocação | 0,956 |
-| Erro de calibração esperado | 0,019 |
-| Acurácia no pior grupo de fontes | 0,575 |
-
-**Modelo de referência a superar**, no mesmo conjunto de teste. O modelo do
-produto precisa ficar acima dele no pior grupo, não só na média:
-
-| Modelo de referência | Acurácia | Medida F1 macro | Pior grupo |
-|---|---:|---:|---:|
-| Frequência de termos com regressão logística | 0,803 | 0,740 | 0,507 |
-
-**Acerto por tamanho do texto**:
-
-| Palavras | Acerto nas verdadeiras | Acerto nas falsas |
-|---|---:|---:|
-| 1 a 15 | 0,738 | 0,839 |
-| 16 a 25 | 0,735 | 0,780 |
-| 26 a 40 | 0,647 | 0,872 |
-| 41 a 80 | 0,720 | 0,919 |
-| 81 a 200 | 0,892 | 0,951 |
-| Mais de 200 | 0,922 | 0,952 |
-
-**Leitura das métricas.** Quando o modelo aponta desinformação, acerta 90% das
-vezes; quando aponta "verdadeira", acerta 63%. Ele deixa passar 16% das
-desinformações e aponta como suspeitas 25% das notícias verdadeiras.
-
-A métrica principal do projeto é a **acurácia no pior grupo**, não a média.
-O conjunto de dados tem grupos de fontes em que todos os textos têm o mesmo
-rótulo; um modelo pode aprender a reconhecer a origem do texto em vez do
-conteúdo. A medição por grupo expõe esse atalho. Os recortes por canal e por
-variedade do português, com a mitigação de cada viés, estão no
-[RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados).
-
-**Requisitos de qualidade propostos para a próxima versão do modelo**:
-
-1. Acurácia no pior grupo acima de 0,70.
-2. Acerto nas notícias verdadeiras com menos de 80 palavras acima de 0,85.
-3. Erro de calibração esperado abaixo de 0,05.
-4. Revocação e precisão por classe relatadas em toda avaliação, como na tabela
-   acima.
-
-### 4.3 Métricas em produção
-
-| Métrica | Fonte | Situação |
+| ID | Regra | Requisitos |
 |---|---|---|
-| Acerto, erro grave e cobertura do sistema completo | `eval/run.py`: 70 casos de desenvolvimento e um conjunto reservado, com gravação e reprodução das chamadas externas | Disponível; valores na [seção 1.4](#14-indicadores-de-desempenho) |
-| Registro de cada execução | Telemetria em `runs/<execução>/` | Disponível; sem acompanhamento ao longo do tempo ([P07](#p07){: .cc-ref}) |
-| Utilidade percebida | Votos dos botões de avaliação † | Não está na `main` |
-| Distribuição das probabilidades em uso real | Telemetria | Pendente ([P07](#p07){: .cc-ref}) |
-
-Os sinais de desvio dos dados e de conceito, e o que acompanhar ao longo do
-tempo, estão em [Monitoramento contínuo](../produto-de-ia/#10-monitoramento-contínuo).
-
-### 4.4 Fontes de dados e coleta contínua
-
-| Fonte | Conteúdo | Uso |
-|---|---|---|
-| FakenewsBR versão 6 | 297.672 textos. Conjunto de treino verificado: 91.080 textos, sendo 66.772 de desinformação e 24.308 verdadeiros, em 36 grupos de origem. | Treino e teste do modelo. |
-| Rótulos em camadas | Cada texto registra a origem do rótulo: agência de checagem, correspondência com checagem, procedência da fonte ou modelo de linguagem local. | Separar os rótulos confiáveis dos rótulos por procedência. |
-| Coletor de portais | `br_news_crawler.py`, com a biblioteca Crawl4AI, percorre os portais do catálogo e extrai título, texto, data, autor e selo. | Alimentar o índice de checagens e de notícias. |
-| Busca de notícias | Serviço SerpAPI, mecanismo Google Notícias. | Cobertura do que foi publicado recentemente. |
-| Avaliações das pessoas | Votos registrados com o texto consultado e a propensão informada, sem identificação. † | Calibrar os pesos do agregador e retreinar o modelo. |
-
-**Requisitos de dados**:
-
-1. Nenhum texto quase duplicado pode aparecer ao mesmo tempo no treino e no
-   teste. Verificação atual: zero pares.
-2. Toda comparação entre versões do modelo usa o mesmo conjunto de teste.
-3. O conteúdo de terceiros segue os termos de cada fonte, registrados em
-   `docs/SOURCES_AND_LICENSES.md` no repositório FakenewsBR.
-4. Arquivos grandes de dados e os pesos do modelo ficam fora do controle de
-   versão e são publicados nas versões do repositório FakenewsBR.
-
-### 4.5 Estratégia de transparência e confiança
-
-1. **A probabilidade é uma estimativa.** A resposta apresenta o valor do
-   modelo como um dos indícios, com o nome do modelo, e nunca como conclusão.
-2. **A probabilidade é calibrada.** Um valor de 0,80 deve corresponder a
-   acerto em cerca de 80% dos casos. O erro medido está na
-   [seção 4.2](#42-métricas-de-avaliação-fora-de-produção).
-3. **O modelo se abstém quando não é confiável.** Em textos curtos ele não
-   opina, e a resposta explica o motivo ([RN04](#rn04){: .cc-ref}). †
-4. **O modelo não decide.** A probabilidade aparece como sinal de estilo e
-   não entra na avaliação ([RN11](#rn11){: .cc-ref}).
-5. **Um componente provisório nunca se passa por medição.** Sem o modelo
-   configurado, a resposta informa que o modelo está em treino e não mostra
-   número.
+| <span id="rn01"></span>RN01 | A resposta nunca é binária: só a escala de propensão. | [RF12](#rf12){: .cc-ref}, [RNF02](#rnf02){: .cc-ref} |
+| <span id="rn02"></span>RN02 | A posição da fonte frente à afirmação prevalece sobre o selo: um selo "verdadeiro" numa página que refuta a afirmação conta contra ela. | [RF13](#rf13){: .cc-ref} |
+| <span id="rn03"></span>RN03 | Republicações do mesmo texto, aliases do mesmo portal e veículos do mesmo grupo econômico contam como uma única fonte. | [RF06](#rf06){: .cc-ref} |
+| <span id="rn04"></span>RN04 | O modelo próprio só opina em textos com 80 palavras ou mais; abaixo disso, a etapa é registrada como pulada, com o motivo. **Não implementado** (ver pendência 3). | [RF08](#rf08){: .cc-ref} |
+| <span id="rn05"></span>RN05 | Páginas iniciais, de seção e de listagem (paginação, tag, autor) não são evidência. | [RF07](#rf07){: .cc-ref} |
+| <span id="rn06"></span>RN06 | Nenhum domínio é bloqueado por lista: o filtro é a relevância para a afirmação. Redes sociais e PDFs não são baixados (não há leitura possível), mas aparecem como fonte "só manchete". | [RF05](#rf05){: .cc-ref}, [RNF02](#rnf02){: .cc-ref} |
+| <span id="rn07"></span>RN07 | O sistema não contorna acesso pago. **Em conflito com o código** quanto à proteção contra robôs (ver pendência 1). | [RF05](#rf05){: .cc-ref} |
+| <span id="rn08"></span>RN08 | O modelo de linguagem não redige a conclusão: ela vem de modelos de texto fixos. | [RF12](#rf12){: .cc-ref}, [RNF01](#rnf01){: .cc-ref} |
+| <span id="rn09"></span>RN09 | Opinião e sátira não são classificadas como fato. | [RF20](#rf20){: .cc-ref} |
+| <span id="rn11"></span>RN11 | O modelo próprio e os padrões textuais não entram na avaliação: aparecem como sinais de estilo. | [RF08](#rf08){: .cc-ref}, [RF09](#rf09){: .cc-ref}, [RF10](#rf10){: .cc-ref} |
+| <span id="rn12"></span>RN12 | Sem julgamento do conteúdo das fontes, a avaliação é "indeterminada". | [RF13](#rf13){: .cc-ref}, [RNF08](#rnf08){: .cc-ref} |
+| <span id="rn13"></span>RN13 | Fonte considerada só pelo título (página não lida) não vota, nem pela posição nem pelo selo; aparece como "só manchete — não analisada integralmente". Selo que vem só do título de um resultado de agência é exibido como "selo da agência no título", sem votar. | [RF07](#rf07){: .cc-ref}, [RF13](#rf13){: .cc-ref} |
+| <span id="rn14"></span>RN14 | Selo de agência só vale quando o juiz indica que a página confirma ou refuta a mesma afirmação; selo de página que só relata, ou de outra alegação, não vota. | [RF04](#rf04){: .cc-ref}, [RF13](#rf13){: .cc-ref}, [RF17](#rf17){: .cc-ref} |
+| <span id="rn15"></span>RN15 | Agência de checagem curada é confiável por natureza: quando ela refuta a afirmação, a refutação pesa como um selo, e a confirmação de fonte que não é agência deixa de votar nessa afirmação. | [RF13](#rf13){: .cc-ref} |
+| <span id="rn16"></span>RN16 | Data incompatível com o marcador temporal do texto reduz o peso da fonte sem zerá-lo, nunca eleva a propensão e impede que a checagem seja considerada aplicável. | [RF17](#rf17){: .cc-ref}, [RF19](#rf19){: .cc-ref} |
+| <span id="rn17"></span>RN17 | Selo de agência é sempre exibido atribuído a ela ("Selo da agência: FALSO"); a conclusão do sistema continua sendo a propensão. | [RF07](#rf07){: .cc-ref}, [RNF02](#rnf02){: .cc-ref} |
+| <span id="rn18"></span>RN18 | Fonte de rede social ou de site pouco acessado, sozinha, não leva a avaliação a "alta" nem a "baixa". | [RF07](#rf07){: .cc-ref}, [RF13](#rf13){: .cc-ref} |
 
 ---
 
-## 5. Matriz de Rastreabilidade e Mapeamento de Integrações Externas
+## 5. Pendências que precisam de decisão
 
-### 5.1 Matriz de rastreabilidade dos requisitos
+| # | Questão | Sugestão |
+|---|---|---|
+| 1 | **[RN07](#rn07){: .cc-ref} × código.** A regra diz que o sistema não contorna proteção contra robôs, mas o código usa `curl_cffi` imitando um navegador e lê páginas da AFP e da UOL que bloqueiam acesso automatizado; o `robots.txt` do Aos Fatos bloqueia robôs de inteligência artificial pelo nome. | Reescrever [RN07](#rn07){: .cc-ref} como "não contorna acesso pago nem pedido de login; lê só páginas públicas, identificando-se como navegador, a no máximo 1 requisição por segundo por site", e retirar da coleta automática os sites cujo `robots.txt` bloqueie o agente usado. |
+| 2 | **Meta de 50 veículos ([RF05](#rf05){: .cc-ref}).** Com a busca aberta na web, o catálogo deixou de limitar quais veículos são consultados; hoje ele define só a confiabilidade. | Trocar a meta por "≥ 80% das respostas com ao menos uma fonte de veículo ou agência verificada pela equipe" e marcar [RF05](#rf05){: .cc-ref} como Implementado. |
+| 3 | **Piso de 80 palavras ([RN04](#rn04){: .cc-ref}).** Documentado e com variável de configuração, mas não implementado; o modelo não entra na avaliação ([RN11](#rn11){: .cc-ref}). | Implementar (mudança pequena em `modelo_fake.py`) para a resposta não exibir número em texto curto, onde o modelo erra mais. |
+| 4 | **Metas de desempenho ([RNF06](#rnf06){: .cc-ref}).** A mediana de 30 s não é atingida quando a consulta vai à web, e o limite diário de chamadas ao modelo de linguagem (`LLM_DAILY_CAP`) não é lido pelo código. O cache da resposta inteira (`RESULT_CACHE_TTL`) também não existe. | Aceitar 60 s como meta quando há busca na web (30 s quando a base resolve); implementar o limite diário de chamadas e o cache de resposta, ou retirar as duas variáveis da documentação. |
+| 5 | **Retenção de dados ([RNF07](#rnf07){: .cc-ref}).** Não há prazo para apagar `runs/` (texto consultado e chamadas) e `feedback.jsonl`. | Apagar automaticamente após 90 dias e informar o prazo no aviso de privacidade. |
+| 6 | **Modelo próprio em operação ([RF08](#rf08){: .cc-ref}, [RF09](#rf09){: .cc-ref}).** O código integra o BERTimbau, mas a operação roda o substituto provisório. | Publicar o modelo R0 na operação ou declarar [RF08](#rf08){: .cc-ref} e [RF09](#rf09){: .cc-ref} como "fora da versão de entrega" e retirar a linha "Modelo de detecção" da resposta. |
+| 7 | **"Sem evidência" com [RN15](#rn15){: .cc-ref}.** Com agência curada pesando como selo, um boato sem prova que uma agência refutou sobe para "alta" (decisão 1 do pull request nº 19). | Manter: a refutação da agência é a evidência mais forte que o sistema tem; registrar a limitação na resposta. |
+| 8 | **Corpo da checagem quando a página não carrega ([RN13](#rn13){: .cc-ref}).** Usar o trecho guardado na base como corpo enfraquece a regra "título não vota" para a base curada (decisão 2 do pull request nº 19). | Permitir só para registros da base com ClaimReview (selo estruturado pela própria agência). |
+| 9 | **Outro aplicativo de mensagem.** O WhatsApp aparecia como critério de [RNF05](#rnf05){: .cc-ref} e como história de usuário. | Declarar fora do escopo desta entrega (já está na Introdução); [RNF05](#rnf05){: .cc-ref} garante que um novo canal seja só um adaptador. |
 
-Cada relação é registrada em um só lugar:
+---
 
-| Relação | Onde está |
+## 6. Histórico de alterações em relação à versão anterior (30/09/2026)
+
+**Status atualizados com o código**
+
+| Item | Antes | Agora | Motivo |
+|---|---|---|---|
+| [RF02](#rf02){: .cc-ref}, [RF03](#rf03){: .cc-ref} | Parcial / Atendido com ressalva † | Implementado | Pedido do texto quando o link não abre e orientação para áudio e voz entraram na `main`. |
+| <span id="rf04"></span>RF04 | Parcial | Implementado | Base com 21.976 checagens de 9 agências (antes 8 agências por RSS), mapas do site, atualização diária e Google Fact Check Tools. |
+| <span id="rf05"></span>RF05 | Parcial | Parcial | A lacuna mudou: a busca é aberta; o que falta é a decisão da pendência 2. |
+| <span id="rf08"></span>RF08 | Parcial (piso de 80 palavras na branch de melhorias) | Parcial | O piso não foi integrado (pendência 3). |
+| <span id="rf14"></span>RF14 | Atendido | Parcial | A frase "não é um veredito" saiu da resposta do robô quando ela passou a mostrar só o resumo de uma linha. |
+| <span id="rf10"></span>RF10 | Atendido com modelo de linguagem | Implementado com regras fixas | O modelo de linguagem foi desligado por padrão (marcava a moldura "me mandaram" como fonte vaga). |
+| <span id="rnf03"></span>RNF03 | Parcial | Implementado | Site descoberto vai para `catalogo_propostas.json` e não entra no catálogo sem aprovação ([P05](versao-anterior/#p05){: .cc-ref} resolvida). |
+| <span id="rnf06"></span>RNF06 | Limite de 50 chamadas ao modelo de linguagem por dia | Não implementado | `LLM_DAILY_CAP` existe só na documentação (pendência 4). |
+| <span id="rnf07"></span>RNF07 | Blindagem contra injeção na branch de melhorias † | Parcial | A blindagem não foi integrada. |
+
+**Requisitos novos** (vindos das decisões de produto de 07/10 a 14/10): [RF16](#rf16){: .cc-ref} (avaliação da pessoa, antes só
+[IND09](versao-anterior/#ind09){: .cc-ref}/[HU13](versao-anterior/#hu13){: .cc-ref}), [RF17](#rf17){: .cc-ref} (base primeiro, E1), [RF18](#rf18){: .cc-ref} (onde foi encontrado, E2), [RF19](#rf19){: .cc-ref} (data da afirmação, E4), [RF20](#rf20){: .cc-ref}
+(mensagem não checável), [RF21](#rf21){: .cc-ref} (atualização diária da base, F1); [RNF10](#rnf10){: .cc-ref} (limite do canal, antes "Restrição"),
+[RNF11](#rnf11){: .cc-ref} (verificação automática, antes [P12](versao-anterior/#p12){: .cc-ref}), [RNF12](#rnf12){: .cc-ref} (estado do serviço, F5 e F6), [RNF13](#rnf13){: .cc-ref} (qualidade da base);
+[RN13](#rn13){: .cc-ref} a [RN18](#rn18){: .cc-ref} (E3, B1/P2, B4, E4, E5 e confiabilidade das fontes).
+
+**Fundidos ou removidos**
+
+| Item anterior | Destino |
 |---|---|
-| Objetivo → indicador | [Seção 1.2](#12-objetivos-sociais-e-de-negócio) |
-| História de usuário → requisito | [Seção 2.5](#25-histórias-de-usuário) |
-| Regra de negócio → requisito | [Seção 2.6](#26-regras-de-negócio) |
-| Requisito → situação | No próprio requisito, nas [seções 2](#2-requisitos-funcionais) e 3 |
-| Requisito → arquivo → teste | Tabela abaixo |
-| Pendência → requisitos afetados | [Seção 5.5](#55-pendências) |
+| [RN10](versao-anterior/#rn10){: .cc-ref} (fonte lida pesa mais que a lida só pelo título) | Fundida em [RN13](#rn13){: .cc-ref}: a fonte lida só pelo título deixou de votar. |
+| [RNF06](#rnf06){: .cc-ref} a [RNF09](#rnf09){: .cc-ref} no documento de produto de inteligência artificial (`versao-anterior/ENGENHARIA_DE_PRODUTO_DE_IA.md`) | Trazidos para a tabela única da seção 3, com critério mensurável. |
+| Critério "um novo canal, como o WhatsApp" ([RNF05](#rnf05){: .cc-ref}) e [HU15](versao-anterior/#hu15){: .cc-ref} | Fora do escopo (Introdução; pendência 9). |
+| Seção "Restrições" | Viraram [RNF10](#rnf10){: .cc-ref} (limite do canal) e itens de [RNF06](#rnf06){: .cc-ref} e [RNF07](#rnf07){: .cc-ref}; "só português" está no escopo. |
+| Histórias de usuário, indicadores, métricas do modelo, matriz de rastreabilidade e lista [P01](versao-anterior/#p01){: .cc-ref}–[P19](versao-anterior/#p19){: .cc-ref} | Não repetidos aqui: continuam no documento anterior; as P que ainda dependem de decisão estão na seção 5. |
 
-| Requisito | Arquivo principal | Teste automatizado |
-|---|---|---|
-| [RF01](#rf01--atender-a-pessoa-por-um-robô-no-telegram){: .cc-ref} | `factcheck_mvp/telegram_bot.py` | `tests/test_guard_unica.py`, `tests/test_bot_modelo.py` |
-| [RF02](#rf02--aceitar-o-texto-o-título-ou-o-link-de-uma-notícia){: .cc-ref} | `factcheck_mvp/telegram_bot.py` | `tests/test_schemas.py`, `tests/test_loop1.py` |
-| [RF03](#rf03--recusar-a-análise-de-imagens-e-vídeos){: .cc-ref} | `factcheck_mvp/telegram_bot.py` | Sem teste automatizado |
-| [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref} | `factcheck_mvp/indice.py`, `factcheck_mvp/ingestor.py`, `factcheck_mvp/selos.py`, `factcheck_mvp/jsonld.py` | `tests/test_indice.py`, `tests/test_indice_checagens.py`, `tests/test_ingestor.py`, `tests/test_selos.py`, `tests/test_jsonld.py` |
-| [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} | `factcheck_mvp/serpapi_layer.py`, `factcheck_mvp/agente.py`, `factcheck_mvp/aprofundar.py`, `factcheck_mvp/extracao.py` | `tests/test_serpapi_layer.py`, `tests/test_agente.py`, `tests/test_extracao.py`, `tests/test_loop1.py` |
-| [RF06](#rf06--comparar-as-informações-das-fontes){: .cc-ref} | `factcheck_mvp/corroboracao.py`, `factcheck_mvp/decisao.py` | `tests/test_corroboracao.py`, `tests/test_decisao.py` |
-| [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref} | `factcheck_mvp/telegram_bot.py`, `factcheck_mvp/pipeline.py` | `tests/test_review_loop4.py`, `tests/test_pipeline.py` |
-| [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref} | `factcheck_mvp/modelo_fake.py` | `tests/test_bot_modelo.py`, `tests/test_modelo_texto_longo.py` † |
-| [RF09](#rf09--exibir-a-estimativa-de-confiança-do-modelo){: .cc-ref} | `factcheck_mvp/modelo_fake.py`, `factcheck_mvp/pipeline.py` | `tests/test_bot_modelo.py` |
-| [RF10](#rf10--identificar-padrões-de-desinformação-no-texto){: .cc-ref} | `factcheck_mvp/padroes_llm.py` | `tests/test_review_loop4.py`, `tests/test_padroes_local.py` †, `tests/test_blindagem.py` † |
-| [RF11](#rf11--apresentar-o-passo-a-passo-da-análise){: .cc-ref} | `factcheck_mvp/pipeline.py`, `factcheck_mvp/telemetria.py` | `tests/test_pipeline.py`, `tests/test_regressao_36.py`, `tests/test_telemetria.py` |
-| [RF12](#rf12--apresentar-a-avaliação-como-propensão-e-não-como-veredito){: .cc-ref} | `factcheck_mvp/agregador.py`, `factcheck_mvp/decisao.py` | `tests/test_schemas.py`, `tests/test_decisao.py` |
-| [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref} | `factcheck_mvp/decisao.py`, `factcheck_mvp/juiz_llm.py` | `tests/test_decisao.py`, `tests/test_juiz_llm.py`, `tests/test_review.py` |
-| [RF14](#rf14--oferecer-à-pessoa-os-elementos-para-uma-decisão-autônoma){: .cc-ref} | `factcheck_mvp/agregador.py` | `tests/test_pipeline.py` |
-| [RF15](#rf15--disponibilizar-a-consulta-por-uma-página-na-internet){: .cc-ref} | `factcheck_mvp/api.py` | `tests/test_schemas.py` (contrato de entrada e saída); sem teste dos pontos de acesso |
-| [RNF01](#rnf01--explicar-como-cada-avaliação-foi-obtida){: .cc-ref} | `factcheck_mvp/decisao.py`, `factcheck_mvp/schemas.py` | `tests/test_decisao.py`, `tests/test_schemas.py` |
-| [RNF02](#rnf02--apresentar-a-avaliação-com-imparcialidade){: .cc-ref} | `factcheck_mvp/agregador.py` | `tests/test_schemas.py` |
-| [RNF03](#rnf03--registrar-a-origem-de-cada-fonte-e-de-cada-etapa){: .cc-ref} | `factcheck_mvp/schemas.py`, `factcheck_mvp/catalogo.py`, `factcheck_mvp/telemetria.py` | `tests/test_descoberta_site.py`, `tests/test_catalogo_roteamento.py`, `tests/test_telemetria.py` |
-| [RNF04](#rnf04--redigir-as-respostas-em-linguagem-simples){: .cc-ref} | `factcheck_mvp/telegram_bot.py` | Sem teste automatizado |
-| [RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref} | `factcheck_mvp/api.py`, `factcheck_mvp/pipeline.py`, `factcheck_mvp/llm.py` | `tests/test_pipeline.py`, `tests/test_llm.py` |
-| [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref} | `factcheck_mvp/config.py`, `factcheck_mvp/api.py`, `factcheck_mvp/replay.py` | `tests/test_serpapi_layer.py`, `tests/test_replay.py`, `tests/test_cache_relatorio.py` † |
-| [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref} | `factcheck_mvp/aprofundar.py`, `factcheck_mvp/telemetria.py`, `factcheck_mvp/juiz_llm.py`, `factcheck_mvp/blindagem.py` † | `tests/test_loop1.py`, `tests/test_telemetria.py`, `tests/test_juiz_llm.py`, `tests/test_blindagem.py` †, `tests/test_feedback.py` † |
-| [RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref} | `factcheck_mvp/pipeline.py`, `factcheck_mvp/decisao.py` | `tests/test_pipeline.py`, `tests/test_review.py` |
-| [RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados){: .cc-ref} | Repositório FakenewsBR: `models/v6/`, `scripts/analise_por_tamanho.py`; `eval/` | Avaliação estatística (`eval/run.py`), sem teste automatizado |
-
-A `main` tem 319 testes automatizados, todos passando em 30 de setembro de
-2026. Os arquivos marcados com † estão só na branch `melhorias/revisao-arquitetura`.
-
-### 5.2 Canais de checagem
-
-Treze plataformas no catálogo. "Extração por seletores" é a leitura da página
-por regras fixas de estrutura; "classificador" é o modelo que reconhece o selo
-no texto.
-
-| Plataforma | Endereço | Estratégia de integração | Observações |
-|---|---|---|---|
-| Fato ou Fake (G1) | g1.globo.com/fato-ou-fake | Modelo de linguagem local para o selo; extração por seletores para o texto. Tem alimentador de notícias e mapa do site. | O selo costuma vir no título. |
-| Aos Fatos | aosfatos.org | Modelo de linguagem local para o selo; extração por seletores para o texto. Tem alimentador de notícias e mapa do site. | Selos próprios: falso, enganoso, verdadeiro. |
-| Agência Lupa | lupa.uol.com.br | Modelo de linguagem local para o selo; extração por seletores para o texto. Tem mapa do site. | Taxonomia própria de selos, convertida para a escala comum. |
-| Fato ou Boato (Tribunal Superior Eleitoral) | justicaeleitoral.jus.br/fato-ou-boato | Modelo de linguagem local e classificador para o selo; extração por seletores. | Proteção contra robôs: exige navegador real. |
-| Projeto Comprova | projetocomprova.com.br | Modelo de linguagem local e classificador para o selo; extração por seletores. Tem mapa do site. | Coalizão de veículos, com selo próprio. |
-| Saúde com Ciência (Ministério da Saúde) | gov.br/saude | Extração por seletores; classificador para o selo. | Sucessor do programa Saúde sem Fake News. |
-| Rede de Checagem em Saúde (Fiocruz, Canal Saúde) | canalsaude.fiocruz.br | Extração por seletores; classificador para o selo. | Em setembro de 2026 a página inicial exibia aviso de período eleitoral. |
-| E-Farsas | e-farsas.com | Extração por seletores; classificador para o selo. | O selo costuma estar no título. |
-| Boatos.org | boatos.org | Extração por seletores; classificador para o selo. | Foco em boatos de aplicativos de mensagem. |
-| UOL Confere | noticias.uol.com.br/confere | Modelo de linguagem local e classificador para o selo; extração por seletores. | Proteção contra robôs: exige navegador real. |
-| Estadão Verifica | estadao.com.br/estadao-verifica | Modelo de linguagem local e classificador para o selo; extração por seletores. | Acesso pago parcial: coleta só o conteúdo público. |
-| Agência Tatu | agenciatatu.com.br | Classificador para separar checagem de reportagem de dados; extração por seletores. | Agência de jornalismo de dados, não só de checagem. |
-| ValorInveste (cobertura de golpes) | valorinveste.globo.com | Busca por termos de golpe e fraude; extração por seletores. | Sem seção dedicada de checagem. |
-
-### 5.3 Canais de notícias
-
-**Veículos com curadoria da equipe** (7):
-
-| Veículo | Endereço | Estratégia de integração | Observações |
-|---|---|---|---|
-| G1 | g1.globo.com | Extração por seletores; modelo de linguagem local como reserva. Tem alimentador de notícias e mapa do site. | Proteção moderada contra robôs. |
-| CNN Brasil | cnnbrasil.com.br | Extração por seletores; modelo de linguagem local para autor e data. Tem mapa do site. | Parte do conteúdo carrega depois da página. |
-| UOL Notícias | noticias.uol.com.br | Metadados e extração por seletores. Tem mapa do site. | Acesso pago em parte do conteúdo. |
-| Folha de S.Paulo | folha.uol.com.br | Página inicial e listagens por seletores; texto completo só quando público. Tem mapa do site. | Acesso pago: não é contornado. |
-| Estadão | estadao.com.br | Extração por seletores e metadados. Tem mapa do site. | Acesso pago parcial. |
-| BBC News Brasil | bbc.com/portuguese | Extração por seletores. Tem mapa do site. | Estrutura estável, sem acesso pago. |
-| Poder360 | poder360.com.br | Alimentador de notícias e extração por seletores. Tem mapa do site. | Estrutura estável. |
-
-**Veículos incluídos por descoberta automática, com curadoria pendente** (16):
-Brasil de Fato, Exame, Autoesporte, O Globo, Olhar Digital, NC News, Agora
-Litoral, National Geographic Brasil, Record, SBT News, Jornal Opção, Banda B,
-Folhamax, Rádio Difusora e dois sites de saúde. Nos quatro últimos, o nome
-gravado é o título de uma matéria, e não o do veículo (por exemplo, "Ações
-importantes que ajudam a combater a dengue"), o que mostra por que a inclusão
-precisa de curadoria ([P05](#p05){: .cc-ref}).
-
-**Lacuna em relação ao [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref}**: 23 veículos catalogados, de uma meta de 50.
-Entre os citados no levantamento, a Forbes ainda não está no catálogo.
-
-### 5.4 Interfaces e serviços externos
-
-**Interfaces oferecidas pelo sistema**
-
-| Interface | Para quem | Descrição |
-|---|---|---|
-| Robô no Telegram | Pessoas | Conversa: texto, título ou link ([RF01](#rf01--atender-a-pessoa-por-um-robô-no-telegram){: .cc-ref}, [RF02](#rf02--aceitar-o-texto-o-título-ou-o-link-de-uma-notícia){: .cc-ref}) |
-| Página na internet, `GET /` | Pessoas | Formulário de consulta e resposta ([RF15](#rf15--disponibilizar-a-consulta-por-uma-página-na-internet){: .cc-ref}) |
-| `POST /checar` | Sistemas | Recebe o tipo e o conteúdo; devolve o relatório tipado ([RF15](#rf15--disponibilizar-a-consulta-por-uma-página-na-internet){: .cc-ref}) |
-| `GET /saude`, `GET /portais` | Sistemas | Estado do serviço e catálogo de portais |
-
-**Serviços de que o sistema depende**
-
-| Serviço | Uso no sistema | Configuração | Comportamento sem o serviço |
-|---|---|---|---|
-| Telegram | Canal de conversa. | `TELEGRAM_TOKEN` | A interface de programação e a página funcionam sem ele. |
-| SerpAPI | Busca de notícias e de checagens recentes (`SERP_ENGINE`, padrão Google). | `SERPAPI_KEY`; limite diário em `SERPAPI_DAILY_CAP`. | A etapa de descoberta é pulada; o sistema usa só o índice de checagens, se ligado. |
-| OpenRouter | Modelo de linguagem para extrair afirmações e consultas, julgar a postura de cada fonte e identificar padrões. | `OPENROUTER_API_KEY`; `OPENROUTER_MODEL_JUIZ` permite um modelo próprio para o julgamento; limite diário em `LLM_DAILY_CAP`. | Sem julgamento das fontes, a resposta é "indeterminada" ([RN12](#rn12){: .cc-ref}). |
-| Modelo de linguagem local | Reserva para todas as finalidades do modelo de linguagem. | `UNSLOTH_BASE_URL`, `UNSLOTH_MODEL_NAME`. | Regras fixas assumem nas afirmações; sem julgamento, [RN12](#rn12){: .cc-ref}. |
-| Feeds RSS e ClaimReview das agências | Índice de checagens com selo tipado. | `INDICE_CHECAGENS`; lista de feeds em `ingestor.py` | O índice não é atualizado; a busca aberta continua. |
-| Trafilatura | Extração do corpo das páginas, na cascata JSON-LD, trafilatura, seletor e regex. | `requirements-mvp.txt` | Os níveis seguintes da cascata assumem. |
-| ReaderLM-v2 (opcional) | Último nível da cascata de extração. Licença não comercial. | `EXTRACAO_READERLM`, `READERLM_BASE_URL` | Desligado por padrão. |
-| Crawl4AI | Coletor antigo dos portais (`br_news_crawler.py`), substituído pelos feeds como fonte do índice. | `requirements.txt` | Nenhum efeito na consulta. |
-| Modelo BERTimbau R0 | Sinal de estilo exibido na resposta, fora da avaliação. | `FAKE_MODEL_PATH` | Substituto identificado como provisório. |
-
-Nenhuma chave de serviço tem valor padrão utilizável. Todas são lidas do
-ambiente e ficam fora do controle de versão.
-
-### 5.5 Pendências
-
-Lista única das pendências do produto. Impacto e esforço são uma **proposta**
-de priorização. Os diagnósticos técnicos estão no relatório de revisão da
-equipe (`docs/review/RELATORIO.md`) e no registro das iterações da avaliação
-(`eval/ITERACOES.md`).
-
-| Pendência | O que falta | Afeta | Impacto | Esforço | Situação |
-|---|---|---|---|---|---|
-| <span id="p01"></span>P01 | Integrar da branch `melhorias/revisao-arquitetura` o que a `main` ainda não tem: proteção contra injeção de instruções, reaproveitamento de respostas, botões de avaliação, orientação para áudio, pedido de texto quando o link não abre e piso de 80 palavras | [RF02](#rf02--aceitar-o-texto-o-título-ou-o-link-de-uma-notícia){: .cc-ref}, [RF03](#rf03--recusar-a-análise-de-imagens-e-vídeos){: .cc-ref}, [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref}, [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref}, [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref} | Alto | Médio | Aberta |
-| <span id="p02"></span>P02 | Ligar o modelo de linguagem em produção | [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref}, [RF06](#rf06--comparar-as-informações-das-fontes){: .cc-ref}, [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref}, [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref} | Alto | Baixo | Aberta |
-| <span id="p03"></span>P03 | Estabilizar a avaliação: evidência mínima, faixas simétricas, estilo fora da nota, sem fontes "relevantes" inventadas | [RF07](#rf07--apresentar-as-fontes-e-seus-endereços){: .cc-ref}, [RF10](#rf10--identificar-padrões-de-desinformação-no-texto){: .cc-ref}, [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref}, [RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref}, [IND07](#ind07){: .cc-ref} | Alto | Baixo | Resolvida no pull request nº 4 |
-| <span id="p04"></span>P04 | Medir o sistema completo com todos os módulos ligados | [IND03](#ind03){: .cc-ref} a [IND06](#ind06){: .cc-ref} | Alto | Baixo | Parcial: avaliação de 70 casos existe; falta uma rodada completa com a cota de busca garantida |
-| <span id="p05"></span>P05 | Aprovar portais novos antes de entrarem no catálogo; curadoria dos votos de avaliação | [RNF03](#rnf03--registrar-a-origem-de-cada-fonte-e-de-cada-etapa){: .cc-ref}, [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref} | Médio | Baixo | Parcial: o portal novo não vale na consulta, mas ainda é gravado |
-| <span id="p06"></span>P06 | Corrigir a comparação de datas entre fontes | [RF06](#rf06--comparar-as-informações-das-fontes){: .cc-ref} | Médio | Baixo | Resolvida no pull request nº 4 |
-| <span id="p07"></span>P07 | Acompanhar ao longo do tempo os sinais de desvio e de desempenho | [RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref}, [IND09](#ind09){: .cc-ref} a [IND13](#ind13){: .cc-ref} | Alto | Médio | Parcial: registro por execução existe; falta a agregação |
-| <span id="p08"></span>P08 | Formar o histórico completo do índice de checagens | [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref}, [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} | Alto | Alto | Parcial: os feeds trazem o passado recente; o histórico exige mapa do site |
-| <span id="p09"></span>P09 | Retreinar o modelo para textos curtos | [RF08](#rf08--submeter-o-texto-ao-modelo-próprio){: .cc-ref}, [RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados){: .cc-ref}, [IND08](#ind08){: .cc-ref} | Médio | Alto | Aberta. Impacto reduzido desde que o modelo saiu da avaliação |
-| <span id="p10"></span>P10 | Ampliar o catálogo para 50 veículos | [RF05](#rf05--consultar-os-principais-veículos-de-comunicação){: .cc-ref} | Médio | Alto | Aberta |
-| <span id="p11"></span>P11 | Validar a linguagem e as personas com pessoas do público-alvo | [RNF04](#rnf04--redigir-as-respostas-em-linguagem-simples){: .cc-ref}, [seção 1.7](#17-personas-e-análise-estratégica-rascunho) | Alto | Médio | Aberta |
-| <span id="p12"></span>P12 | Executar os testes automaticamente a cada envio ao repositório | [RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref} | Médio | Baixo | Aberta |
-| <span id="p13"></span>P13 | Definir a frequência de retreino e adotar o modo sombra | [RNF08](../produto-de-ia/#rnf08--manter-a-resposta-disponível-diante-de-falhas){: .cc-ref} | Médio | Médio | Aberta |
-| <span id="p14"></span>P14 | Medir o viés por tema e por posição política | [RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados){: .cc-ref} | Médio | Médio | Aberta |
-| <span id="p15"></span>P15 | Escrever a política de retenção de dados, incluindo os registros de execução | [RNF07](../produto-de-ia/#rnf07--proteger-os-dados-e-o-sistema-contra-uso-indevido){: .cc-ref} | Médio | Baixo | Aberta |
-| <span id="p16"></span>P16 | Imagem de contêiner e versões de bibliotecas fixadas | Reprodutibilidade | Baixo | Baixo | Aberta |
-| <span id="p17"></span>P17 | Canal em outro aplicativo de mensagem | [RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref}, [HU15](#hu15){: .cc-ref} | Médio | Alto | Aberta |
-| <span id="p18"></span>P18 | Tratar afirmações compostas sem perder o conector ("X, mas foi ele que criou") | [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref}, [IND05](#ind05){: .cc-ref} | Médio | Médio | Aberta |
-| <span id="p19"></span>P19 | Levar notícias verdadeiras e refutações de agência a "baixa" e "alta", e não a "média": veredito pelo título das fontes de checagem e peso maior para agência curada | [RF04](#rf04--consultar-as-plataformas-de-checagem){: .cc-ref}, [RF13](#rf13--fundamentar-a-avaliação-com-evidências){: .cc-ref}, [IND04](#ind04){: .cc-ref} | Alto | Médio | Aberta, com hipóteses registradas em `eval/ITERACOES.md` |
-
-**Por onde começar:** [P02](#p02){: .cc-ref} e [P04](#p04){: .cc-ref} têm esforço baixo e destravam a medição do
-sistema. [P19](#p19){: .cc-ref} ataca a maior fonte de erro registrada na avaliação.
-
-### 5.6 Gestão dos requisitos
-
-| Momento | O que foi feito | Situação |
-|---|---|---|
-| Elicitação | Sessão de ideias da equipe, que gerou [RF01](#rf01--atender-a-pessoa-por-um-robô-no-telegram){: .cc-ref} a [RF15](#rf15--disponibilizar-a-consulta-por-uma-página-na-internet){: .cc-ref} e [RNF01](#rnf01--explicar-como-cada-avaliação-foi-obtida){: .cc-ref} a [RNF05](#rnf05--permitir-novos-canais-sem-alterar-a-lógica-de-checagem){: .cc-ref}; análise de plataformas de checagem e de portais | Atendido. Entrevistas com o público-alvo: [P11](#p11){: .cc-ref} |
-| Análise | Protótipo funcional do robô e da interface de programação; revisão de código da equipe (`docs/review/`) | Atendido |
-| Especificação | Este documento, com critérios de aceitação, histórias e regras, no padrão de redação da [seção 2](#2-requisitos-funcionais); [RNF06](../produto-de-ia/#rnf06--responder-dentro-dos-limites-de-tempo-e-de-custo){: .cc-ref} a [RNF09](../produto-de-ia/#rnf09--medir-e-mitigar-os-vieses-do-modelo-e-dos-dados){: .cc-ref} no documento de produto | Atendido |
-| Validação | Testes automatizados por requisito ([seção 5.1](#51-matriz-de-rastreabilidade-dos-requisitos)); avaliação com casos rotulados e reprodução determinística (`eval/`) | Parcial: [P04](#p04){: .cc-ref} e [P11](#p11){: .cc-ref} |
-| Gerenciamento | Requisitos versionados no repositório; mudanças entram por pedido de integração revisado; cada relação registrada em um só lugar | Atendido |
+**Termos.** "Atendido / Parcial / Pendente" passaram a "Implementado / Parcial / Não implementado". Toda linha
+ganhou prioridade (Alta, Média, Baixa), que é uma proposta desta versão.

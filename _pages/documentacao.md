@@ -5,8 +5,10 @@ nav: true
 nav_order: 2
 dropdown: true
 children:
-  - title: Engenharia de Requisitos
+  - title: Requisitos
     permalink: /requisitos/
   - title: Produto de Inteligência Artificial
     permalink: /produto-de-ia/
+  - title: Requisitos (versão de 30/09)
+    permalink: /requisitos/versao-anterior/
 ---
