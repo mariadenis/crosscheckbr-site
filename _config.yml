@@ -2,14 +2,14 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: Crosscheck BR # the website title (if blank, full name will be used instead)
+title: Checa AI # the website title (if blank, full name will be used instead)
 first_name: Equipe
 middle_name:
-last_name: Crosscheck BR
+last_name: Checa AI
 contact_note: >
   Dúvidas e sugestões: abra uma issue no repositório do projeto.
 description: > # the ">" symbol means to ignore newlines until "footer_text:"
-  Checagem cruzada de fatos em larga escala: um assistente que estima a propensão de uma notícia ser desinformação, com evidências e passo a passo.
+  Checa AI: assistente de checagem de fatos que estima a propensão de uma notícia ser desinformação, com as fontes que embasam a estimativa e o passo a passo da análise.
 footer_text: >
   Feito com <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> e o tema <a href="https://github.com/alshedivat/al-folio">al-folio</a>.
   Hospedado no <a href="https://pages.github.com/" target="_blank">GitHub Pages</a>.
@@ -135,7 +135,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Crosscheck BR # blog_name will be displayed in your blog page
+blog_name: Checa AI # blog_name will be displayed in your blog page
 blog_description: novidades do projeto
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts

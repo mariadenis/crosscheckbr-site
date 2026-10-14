@@ -2,7 +2,7 @@
 layout: page
 permalink: /equipe/
 title: Equipe e Repositórios 
-description: Quem faz o Crosscheck BR.
+description: Quem faz o Checa AI.
 nav: true
 nav_order: 3
 ---
@@ -19,7 +19,7 @@ nav_order: 3
 
 ## Repositórios 
 
-O projeto tem dois repositórios. O **CrossCheckBR** é o robô: recebe a notícia, consulta as fontes e monta a resposta. O **FakenewsBR** reúne o conjunto de dados em português e o modelo de detecção treinado com ele.
+O projeto tem dois repositórios. O **Checa-AI** (antes chamado CrossCheckBR) é o robô: recebe a notícia, consulta as fontes e monta a resposta. O **FakenewsBR** reúne o conjunto de dados em português e o modelo de detecção treinado com ele.
 
 {% if site.data.repositories.github_repos %}
 
@@ -31,6 +31,6 @@ O projeto tem dois repositórios. O **CrossCheckBR** é o robô: recebe a notíc
 {% endif %}
 
 
-Dúvidas e sugestões: abra uma issue no [repositório do projeto](https://github.com/thiago-cg/CrossCheckBR).
+Dúvidas e sugestões: abra uma issue no [repositório do projeto](https://github.com/thiago-cg/Checa-AI).
 
 
