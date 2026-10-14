@@ -1,8 +1,8 @@
 /*******************************************************************************
- * Identidade visual Crosscheck BR
+ * Identidade visual Checa AI
  * Override local de al_folio_core/_sass/_themes.scss: mudam só os valores dos
- * tokens de cor (claro e escuro) e o bloco "Crosscheck BR" no fim do arquivo.
- * Fonte dos valores: docs/IDENTIDADE_VISUAL.md (guia de marca v1.0).
+ * tokens de cor (claro e escuro) e o bloco "Checa AI" no fim do arquivo.
+ * Cor da marca: azul-petróleo #155563 (logo do Figma "Design mobile inicial").
  ******************************************************************************/
 /*******************************************************************************
  * Themes
@@ -16,22 +16,22 @@
   --global-code-bg-color: #ebf0f5;
   --global-text-color: #1a1d20;
   --global-text-color-light: #5b6168;
-  --global-theme-color: #1a1d20;
-  --global-hover-color: #1a1d20;
-  --global-hover-text-color: #f8f7f4;
-  --global-footer-bg-color: #1a1d20;
-  --global-footer-text-color: #c9cbc6;
+  --global-theme-color: #155563;
+  --global-hover-color: #155563;
+  --global-hover-text-color: #ffffff;
+  --global-footer-bg-color: #155563;
+  --global-footer-text-color: #d3e3e7;
   --global-footer-link-color: #f8f7f4;
   --global-distill-app-color: #5c6066;
   --global-divider-color: #e2e8f0;
   --global-card-bg-color: #f0f0ec;
-  --global-highlight-color: #c85a32;
+  --global-highlight-color: #155563;
   --global-back-to-top-bg-color: rgba(26, 29, 32, 0.45);
   --global-back-to-top-text-color: #f8f7f4;
   --global-newsletter-bg-color: #f0f0ec;
   --global-newsletter-text-color: #1a1d20;
 
-  --global-tip-block: #2e6f40;
+  --global-tip-block: #155563;
   --global-tip-block-bg: #f0f0ec;
   --global-tip-block-text: #1a1d20;
   --global-tip-block-title: #1a1d20;
@@ -81,10 +81,10 @@ html[data-theme="dark"] {
   --global-code-bg-color: #252b31;
   --global-text-color: #f0f0ec;
   --global-text-color-light: #a3a7ad;
-  --global-theme-color: #f0f0ec;
-  --global-hover-color: #f0f0ec;
+  --global-theme-color: #7ec4d2;
+  --global-hover-color: #7ec4d2;
   --global-hover-text-color: #1a1d20;
-  --global-footer-bg-color: #111315;
+  --global-footer-bg-color: #0e3a44;
   --global-footer-text-color: #a3a7ad;
   --global-footer-link-color: #f8f7f4;
   --global-distill-app-color: #a3a7ad;
@@ -95,7 +95,7 @@ html[data-theme="dark"] {
   --global-newsletter-bg-color: #23272b;
   --global-newsletter-text-color: #f0f0ec;
 
-  --global-tip-block: #7fb88d;
+  --global-tip-block: #7ec4d2;
   --global-tip-block-bg: #23272b;
   --global-tip-block-text: #f0f0ec;
   --global-tip-block-title: #f0f0ec;
@@ -205,11 +205,10 @@ html[data-theme-setting="light"] {
 
 
 /*******************************************************************************
- * Crosscheck BR — tokens, tipografia e componentes de documento.
- * Tokens e regras: docs/IDENTIDADE_VISUAL.md (guia de marca v1.0).
- * Páginas de documento seguem o guia de formatação de documentos: título em
- * Playfair Display 32 pt, subtítulos em Inter 22/18 pt, corpo 12 pt com
- * entrelinha 1,5, bordas #E2E8F0, Azul Névoa em código e cabeçalho de tabela.
+ * Checa AI — tokens, tipografia e componentes de documento.
+ * Marca: azul-petróleo #155563; títulos e corpo em Inter (o logo usa Inter
+ * extra-negrito); subtítulos 22/18 pt, corpo 12 pt com entrelinha 1,5,
+ * bordas #E2E8F0 e um tom claro de petróleo em código e cabeçalho de tabela.
  * As fontes vêm de third_party_libraries.google_fonts no _config.yml.
  ******************************************************************************/
 :root {
@@ -219,13 +218,13 @@ html[data-theme-setting="light"] {
   --cc-chumbo: #5b6168;
   --cc-linha: #d8d5ce;
   --cc-borda: #e2e8f0;
-  --cc-verde: #2e6f40;
+  --cc-petroleo: #155563;
   --cc-terracota: #c85a32;
   --cc-terracota-texto: #a8461f;
   --cc-mostarda: #d9a036;
   --cc-mostarda-texto: #7a5a12;
-  --cc-nevoa: #ebf0f5;
-  --cc-fonte-titulo: "Playfair Display", Georgia, "Times New Roman", serif;
+  --cc-nevoa: #e7f0f2;
+  --cc-fonte-titulo: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --cc-fonte-texto: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --cc-fonte-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
   --cc-raio: 2px;
@@ -236,11 +235,11 @@ html[data-theme="dark"] {
   --cc-chumbo: #a3a7ad;
   --cc-linha: #3a3f45;
   --cc-borda: rgba(240, 240, 236, 0.16);
-  --cc-verde: #7fb88d;
+  --cc-petroleo: #7ec4d2;
   --cc-terracota: #e0825f;
   --cc-terracota-texto: #eba58b;
   --cc-mostarda-texto: #ecc877;
-  --cc-nevoa: #252b31;
+  --cc-nevoa: #1f2d31;
 }
 
 /* ---- Texto ---------------------------------------------------------------- */
@@ -254,10 +253,11 @@ html body {
 h1,
 .post-title {
   font-family: var(--cc-fonte-titulo);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 2.667rem; /* 32 pt */
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  color: var(--cc-petroleo);
 }
 
 h2,
@@ -301,6 +301,7 @@ article a:not(.btn),
   color: var(--global-text-color);
   text-decoration: underline;
   text-decoration-thickness: 1px;
+  text-decoration-color: var(--cc-petroleo);
   text-underline-offset: 0.18em;
 
   &:hover {
@@ -348,7 +349,7 @@ article tr:has(span:target) td,
 
 .navbar.navbar-light .navbar-nav .nav-item.active > .nav-link {
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--global-text-color);
+  box-shadow: inset 0 -2px 0 var(--cc-petroleo);
 }
 
 /* ---- Código: fundo Azul Névoa, sem borda ---------------------------------- */
@@ -450,7 +451,7 @@ blockquote.block-danger {
 }
 
 blockquote.block-tip {
-  border-left-color: var(--cc-verde);
+  border-left-color: var(--cc-petroleo);
 }
 
 blockquote.block-warning {
@@ -471,7 +472,7 @@ blockquote.block-danger {
 
 .cc-kpi {
   border: 1px solid var(--cc-borda);
-  border-top: 4px solid var(--cc-verde);
+  border-top: 4px solid var(--cc-petroleo);
   border-radius: var(--cc-raio);
   padding: 1rem;
 }
@@ -513,7 +514,7 @@ blockquote.block-danger {
   margin: 2.5cm;
 
   @bottom-left {
-    content: "Crosscheck BR";
+    content: "Checa AI";
     font-family: "Inter", sans-serif;
     font-size: 8pt;
     color: #5b6168;
@@ -581,7 +582,7 @@ blockquote.block-danger {
     display: block;
     height: 28pt;
     margin-bottom: 28pt;
-    background: url("../img/marca/crosscheck-br-horizontal-positiva.svg") no-repeat left center / contain;
+    background: url("../img/marca/checa-ai-horizontal-positiva.svg") no-repeat left center / contain;
   }
 
   article table,
