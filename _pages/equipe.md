@@ -12,12 +12,12 @@ O **Product Owner** do projeto são os mentores do programa, que propuseram o de
 
 | Foto | Integrante | GitHub | Papel |
 | :---: | :--- | :---: | :---: | :--- |
-| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Daltro Oliveira Vinuto | - | Time de Desenvolvimento |
+| <img src="https://github.com/Daltro-Oliveira-Vinuto.png" width="50" style="border-radius: 50%;"> | Daltro Oliveira Vinuto | [@Daltro-Oliveira-Vinuto](https://github.com/Daltro-Oliveira-Vinuto) | Time de Desenvolvimento |
 | <img src="https://github.com/mariadenis.png" width="50" style="border-radius: 50%;"> | Maria Eduarda Denis Duarte Marques | [@mariadenis](https://github.com/mariadenis) | Time de Desenvolvimento |
 | <img src="https://github.com/thiago-cg.png" width="50" style="border-radius: 50%;"> | Thiago Correia Gonzaga | [@thiago-cg](https://github.com/thiago-cg) | Time de Desenvolvimento |
-| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Gabriella Oliveira de Souza Dias | - | Time de Desenvolvimento |
-| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Guilherme Silva Dutra | - | Time de Desenvolvimento |
-| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Eliane Orlandin do Carmo | - | Time de Desenvolvimento |
+| <img src="https://github.com/Gabizinha88.png" width="50" style="border-radius: 50%;"> | Gabriella Oliveira de Souza Dias | [@Gabizinha88](https://github.com/Gabizinha88) | Time de Desenvolvimento |
+| <img src="https://github.com/GuiDutra21.png" width="50" style="border-radius: 50%;"> | Guilherme Silva Dutra | [@GuiDutra21](https://github.com/GuiDutra21) | Time de Desenvolvimento |
+| <img src="https://github.com/Eliane-orlandin.png" width="50" style="border-radius: 50%;"> | Eliane Orlandin do Carmo | [@Eliane-orlandin](https://github.com/Eliane-orlandin) | Time de Desenvolvimento |
 
 ## Repositórios 
 
