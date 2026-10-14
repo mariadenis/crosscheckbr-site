@@ -12,7 +12,7 @@ O **Product Owner** do projeto são os mentores do programa, que propuseram o de
 
 | Foto | Integrante | GitHub | Papel |
 | :---: | :--- | :---: | :---: | :--- |
-| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Daltro Oliveira Vinuto | - | Scrum Master |
+| <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Daltro Oliveira Vinuto | - | Time de Desenvolvimento |
 | <img src="https://github.com/mariadenis.png" width="50" style="border-radius: 50%;"> | Maria Eduarda Denis Duarte Marques | [@mariadenis](https://github.com/mariadenis) | Time de Desenvolvimento |
 | <img src="https://github.com/thiago-cg.png" width="50" style="border-radius: 50%;"> | Thiago Correia Gonzaga | [@thiago-cg](https://github.com/thiago-cg) | Time de Desenvolvimento |
 | <img src="https://github.com/github.png" width="50" style="border-radius: 50%;"> | Gabriella Oliveira de Souza Dias | - | Time de Desenvolvimento |
